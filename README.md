@@ -71,7 +71,7 @@ arrow_tbl <- cursor$arrow()
 agg <- table$aggregate(
   group_by = "'TOTAL'",
   filter = "depth > 200",
-  aggr = list(mean_depth = "mean")
+  aggr = list(depth = "mean")
 )
 print(agg)
 # tibble support
