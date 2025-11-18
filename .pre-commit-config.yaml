@@ -1,0 +1,15 @@
+repos:
+  - repo: local
+    hooks:
+      - id: lintr-r-sdk
+        name: lintr (r_sdk)
+        entry: Rscript --vanilla scripts/precommit_lintr.R
+        language: system
+        files: ^.*\.[rR](md)?$
+        pass_filenames: true
+      - id: styler-r-sdk
+        name: styler (r_sdk)
+        entry: Rscript --vanilla scripts/precommit_styler.R
+        language: system
+        files: ^.*\.[rR](md)?$
+        pass_filenames: true

@@ -16,15 +16,15 @@ metadata and streaming batches into familiar R data structures.
 - Packages declared in `DESCRIPTION` (install with `pak`, `renv`, or
   `install.packages()`)
 - A valid HubOcean API key exposed as the env variable `ODP_API_KEY` or passed
-directly when creating the client. The API key can be moved under "My account"
-in the wep app.
+directly when creating the client. The API key can be found by visiting ["My account"
+in the wep app](https://app.hubocean.earth/account).
 
 ## Getting Started
 
 ```r
-# from the repository root
-setwd("r_sdk")
-install.packages(".", repos = NULL, type = "source")
+# install straight from GitHub (requires remotes, pak, or devtools)
+install.packages("remotes")  # skip if already installed
+remotes::install_github("C4IROcean/odp-sdkr")
 
 library(odp)
 client <- odp_client(api_key="Sk_....")
@@ -38,7 +38,7 @@ cursor <- sightings$select(
   timeout = 15
 )
 
-# materialise the cursor when you want the full result
+# Materialise the cursor when you want the full result
 result <- cursor$dataframe()
 print(result)
 # optional tidyverse helper (requires the tibble package)
@@ -46,11 +46,12 @@ print(result)
 ```
 
 ### Streaming rows in batches
+When working with a large table it can be helpful to fetch the table in batches, to do this you can use the next_batch helper to iterate over the batches one by one. The cursor will fetch the pages in chunks in the background when you need them
 
 ```r
 cursor <- sightings$select()
 while (!is.null(chunk <- cursor$next_batch())) {
-  print(chunk$num_rows)  # transparently fetches additional backend pages
+  print(chunk$num_rows)
 }
 
 # Convert on demand
@@ -93,9 +94,9 @@ str(stats)
 
 ### Optional dependencies
 
-- `tibble` (only if you want `cursor$tibble()` or `cursor$collect(as_tibble = TRUE)`)
+- `tibble` (only if you want `cursor$tibble()`)
 
-Install optional packages as needed, for example: `install.packages("tibble", repos = "https://cran.uib.no/")`.
+Install optional packages as needed, for example: `install.packages("tibble")`.
 
 ## Development
 
