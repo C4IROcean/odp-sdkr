@@ -5,10 +5,9 @@ The SDK focuses on authenticated access to tabular datasets exposed by the
 HubOcean API and currently provides read-only helpers for inspecting
 metadata and streaming batches into familiar R data structures.
 
-> **Status**: read-only. Creating, inserting, or mutating tables is purposely
-> unavailable in this version. Please reach out if there are capabilities that
-> could be useful for you, and we will consider whether it is something we can
-> support.
+> Status: This sdk is still considered pre-release. We are looking for feedback,
+> so please reach out if you have any issues, concerns or other ideas that you
+> think can improve your experience using this sdk.
 
 ## Requirements
 
@@ -67,6 +66,7 @@ arrow_tbl <- cursor$arrow()
 
 ### Aggregations
 
+The sdk supports server side aggregations. This can be useful if you want to compute simple statistics without transfering all of the table data
 ```r
 agg <- table$aggregate(
   group_by = "'TOTAL'",
@@ -74,16 +74,12 @@ agg <- table$aggregate(
   aggr = list(depth = "mean")
 )
 print(agg)
-# tibble support
-# table$aggregate_tibble(...)
 ```
 
 > Pass an `aggr` named list where each entry specifies how the column should be
-> aggregated (`"sum"`, `"min"`, `"max"`, `"count"`, `"mean"`). When no
-> aggregations are defined on the server schema you must supply this argument.
+> aggregated (`"sum"`, `"min"`, `"max"`, `"count"`, `"mean"`).
 
 ### Metadata helpers
-
 ```r
 schema <- sightings$schema()
 str(schema)
