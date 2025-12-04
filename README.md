@@ -56,6 +56,7 @@ print(result)
 - `vignette("odp-tabular")` focuses on working with tabular datasets: batching,
   filters, projections, and server-side aggregations (requires installing with
   vignettes built)
+- Hosted docs: https://docs.hubocean.earth/r_sdk/
 
 ### Streaming rows in batches
 When working with a large table it can be helpful to fetch the table in batches, to do this you can use the next_batch helper to iterate over the batches one by one. The cursor will fetch the pages in chunks in the background when you need them

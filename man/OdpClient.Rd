@@ -6,8 +6,9 @@
 \title{HubOcean API client}
 \description{
 Thin wrapper around the HubOcean API powering \code{\link[=odp_client]{odp_client()}}. Handles
-authentication and exposes helpers for JSON/Arrow requests used by dataset and
-table objects.
+authentication and exposes helpers for datasets/tables. Use
+\code{\link[=odp_client]{odp_client()}}\verb{$dataset()} to obtain a dataset handle that exposes the tabular
+interface.
 }
 \section{Methods}{
 

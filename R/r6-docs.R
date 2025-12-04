@@ -1,8 +1,9 @@
 #' HubOcean API client
 #'
 #' Thin wrapper around the HubOcean API powering [odp_client()]. Handles
-#' authentication and exposes helpers for JSON/Arrow requests used by dataset and
-#' table objects.
+#' authentication and exposes helpers for datasets/tables. Use
+#' [odp_client()]`$dataset()` to obtain a dataset handle that exposes the tabular
+#' interface.
 #'
 #' @section Methods:
 #' \describe{

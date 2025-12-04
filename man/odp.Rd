@@ -15,7 +15,8 @@ common R structures like \code{data.frame}s and tibbles.
 
 Run \code{help(package = "odp")}, \code{browseVignettes("odp")}, or \code{??odp} for
 walkthroughs covering installation, authentication, streaming helpers, and
-aggregations from scripts or notebooks. When installing from a local checkout,
+aggregations from scripts or notebooks. Hosted docs can be found in our
+official portal \url{https://docs.hubocean.earth/r_sdk/}. When installing from a local checkout,
 build vignettes (\code{remotes::install_local(..., build_vignettes = TRUE)}) so that
 \code{vignette("odp")} and friends are available.
 }
@@ -23,6 +24,7 @@ build vignettes (\code{remotes::install_local(..., build_vignettes = TRUE)}) so 
 \section{Articles}{
 
 \itemize{
+\item ODP R SDK overview: \url{https://docs.hubocean.earth/r_sdk/}
 \item \code{vignette("odp")} introduces installation, authentication, and cursors.
 \item \code{vignette("odp-tabular")} focuses on working with tabular datasets: streaming,
 filtering, projections, and aggregations.
