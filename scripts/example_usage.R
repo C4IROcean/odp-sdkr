@@ -47,7 +47,7 @@ tibble_df <- table$select()$tibble()
 print(utils::head(tibble_df, 5))
 
 print("Aggregate count by type from tibble sample...")
-print(dplyr::count(tibble_df, type))
+print(table(tibble_df$type))
 
 print("Iterating over chunks ...")
 cursor <- table$select()

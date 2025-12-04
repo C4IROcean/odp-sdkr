@@ -1,3 +1,4 @@
+# HubOcean API client R6 generator used internally by `odp_client()`
 OdpClient <- R6::R6Class(
   "OdpClient",
   public = list(

@@ -216,6 +216,7 @@ OdpTable <- R6::R6Class(
       tibble::as_tibble(self$aggregate(...))
     },
     #' @keywords internal
+    #' @noRd
     select_request = function(request, cursor = "", retry = TRUE) {
       if (missing(request) || !is.list(request)) {
         cli::cli_abort("`request` must be a list")

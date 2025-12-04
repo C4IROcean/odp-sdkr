@@ -52,7 +52,8 @@ odp_as_character_vector <- function(x, allow_null = TRUE) {
 #' Normalises mixed inputs (named vectors, lists, or single-row data frames)
 #' into a list ready for JSON encoding.
 #'
-#' @export
+#' @keywords internal
+#' @noRd
 odp_prepare_bindings <- function(vars) {
   if (is.null(vars)) {
     return(NULL)
@@ -101,7 +102,8 @@ odp_cast_binding_value <- function(value) {
 #'
 #' Ensures the provided timeout is a positive numeric scalar.
 #'
-#' @export
+#' @keywords internal
+#' @noRd
 odp_check_timeout <- function(timeout) {
   if (!is.numeric(timeout) || length(timeout) != 1 || is.na(timeout) || timeout <= 0) {
     cli::cli_abort("`timeout` must be a single numeric value greater than zero")

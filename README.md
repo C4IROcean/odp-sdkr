@@ -25,12 +25,16 @@ in the wep app](https://app.hubocean.earth/account).
 install.packages("remotes")  # skip if already installed
 remotes::install_github("C4IROcean/odp-sdkr")
 
+# local checkout? make sure vignettes are built
+# remotes::install_local("~/dev/odp_sdkr", build = TRUE, build_vignettes = TRUE)
+
 library(odp)
 client <- odp_client(api_key="Sk_....")
 
-dataset <- client$dataset("demo.table.id")
-sightings <- dataset$table
-cursor <- sightings$select(
+# Use the dataset id from the catalog (example: public GLODAP dataset)
+dataset <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
+table <- dataset$table
+cursor <- table$select(
   filter = "depth > $min_depth",
   vars = list(min_depth = 300),
   columns = c("latitude", "longitude", "depth"),
@@ -44,11 +48,20 @@ print(result)
 # tib_result <- cursor$tibble()
 ```
 
+## Documentation
+
+- `help(package = "odp")` lists all reference topics
+- `vignette("odp")` covers installation, authentication, and cursor basics (requires
+  installing with vignettes built)
+- `vignette("odp-tabular")` focuses on working with tabular datasets: batching,
+  filters, projections, and server-side aggregations (requires installing with
+  vignettes built)
+
 ### Streaming rows in batches
 When working with a large table it can be helpful to fetch the table in batches, to do this you can use the next_batch helper to iterate over the batches one by one. The cursor will fetch the pages in chunks in the background when you need them
 
 ```r
-cursor <- sightings$select()
+cursor <- table$select()
 while (!is.null(chunk <- cursor$next_batch())) {
   print(chunk$num_rows)
 }
@@ -81,10 +94,10 @@ print(agg)
 
 ### Metadata helpers
 ```r
-schema <- sightings$schema()
+schema <- table$schema()
 str(schema)
 
-stats <- sightings$stats()
+stats <- table$stats()
 str(stats)
 ```
 

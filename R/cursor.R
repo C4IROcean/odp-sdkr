@@ -1,20 +1,3 @@
-#' Arrow stream cursor helper
-#'
-#' Lazily fetches Arrow IPC pages from the backend and exposes chunk iteration
-#' utilities similar to the Python SDK. Each chunk is a `RecordBatch`, and the
-#' cursor transparently issues follow-up requests when the server signals that
-#' more data is available. Materialisation helpers (`collect()`/`dataframe()`/
-#' `tibble()`/`arrow()`) only drain the *remaining* batches; if you need the
-#' complete dataset, call them before consuming chunks or create a fresh cursor.
-#'
-#' Internally the cursor keeps a tiny state machine: the current
-#' `RecordBatchStreamReader`, the next cursor token provided by the backend, the
-#' latest schema, and a `finished` flag. `next_batch()` drains the active reader;
-#' when it reaches the end of a page it immediately requests the next one using
-#' the stored cursor token. When the backend stops returning tokens the cursor is
-#' marked finished and subsequent calls simply return `NULL`.
-#'
-#' @export
 OdpCursor <- R6::R6Class(
   "OdpCursor",
   public = list(

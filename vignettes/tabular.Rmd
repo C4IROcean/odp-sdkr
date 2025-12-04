@@ -1,0 +1,155 @@
+---
+title: "Working with ODP Tabular Data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{odp-tabular}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Most ODP workflows revolve around tabular resources exposed through the HubOcean
+API. This vignette focuses on those helpers: inspecting schemas, streaming data
+in batches, projecting and filtering columns, and letting the backend aggregate
+rows for you.
+
+> Scope: writing/mutating tables is still out-of-scope for the SDK. The helpers
+> here are read-only and revolve around authenticated scans of Arrow batches.
+
+## Installation
+
+Install the development build straight from GitHub with `remotes`, `pak`, or
+`devtools`. These examples use `remotes`:
+
+```{r install, eval = FALSE}
+install.packages("remotes")  # once per machine
+remotes::install_github("C4IROcean/odp-sdkr")
+
+# local checkout? build vignettes so this article is included
+# remotes::install_local("~/dev/odp_sdkr", build = TRUE, build_vignettes = TRUE)
+```
+
+```{r load, eval = FALSE}
+library(odp)
+```
+
+Create a client with `odp_client()`, passing the API key explicitly or via the
+`ODP_API_KEY` environment variable:
+
+```{r auth, eval = FALSE}
+client <- odp_client(api_key = "Sk_live_your_key")
+
+Sys.setenv(ODP_API_KEY = "Sk_live_your_key")
+client <- odp_client()
+```
+
+## Locate a tabular dataset
+
+Dataset identifiers match the UUIDs in the HubOcean catalog
+(<https://app.hubocean.earth/catalog>). This vignette references the public
+GLODAP dataset, but any tabular dataset works.
+
+```{r dataset, eval = FALSE}
+dataset <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
+table <- dataset$table
+```
+
+Use `table$schema()` and `table$stats()` to understand the shape of the table
+before streaming rows:
+
+```{r meta, eval = FALSE}
+schema <- table$schema()
+stats <- table$stats()
+```
+
+## Streaming batches
+
+`table$select()` returns an `OdpCursor` that lazily streams Arrow
+`RecordBatch` chunks. Iterate with `next_batch()` or materialise unread batches
+into familiar R structures.
+
+```{r select, eval = FALSE}
+cursor <- table$select()
+while (!is.null(batch <- cursor$next_batch())) {
+  cat("chunk rows:", batch$num_rows, "\n")
+  # process each RecordBatch on the fly
+}
+
+df <- cursor$dataframe()
+arrow_tbl <- cursor$arrow()
+# optional tidyverse helper
+tib_tbl <- cursor$tibble()
+```
+
+Materialisation helpers only drain batches that have not been streamed yet. To
+collect the full result after iterating with `next_batch()`, start a new cursor
+and call `dataframe()`/`arrow()`/`tibble()` before consuming chunks.
+
+### Filters
+
+Filters accept SQL/Arrow-style expressions, including geospatial helpers like
+`within`, `contains`, and `intersect`.
+
+```{r filters, eval = FALSE}
+cursor <- table$select(filter = "G2year >= 2020 AND G2year < 2025")
+
+bbox <- 'geometry within "POLYGON ((-10 50, -5 50, -5 55, -10 55, -10 50))"'
+cursor <- table$select(filter = bbox)
+```
+
+### Column projections
+
+Restrict the projection when you only need specific fields:
+
+```{r columns, eval = FALSE}
+cursor <- table$select(columns = c("G2tco2", "G2year"))
+```
+
+### Bind variables
+
+Bind parameters inside the filter to avoid string pasting. Use named or
+positional variables:
+
+```{r vars, eval = FALSE}
+cursor <- table$select(
+  filter = "G2year >= $start AND G2year < $end",
+  vars = list(start = 2020, end = 2025)
+)
+
+# positional form
+table$select(filter = "G2year >= ? AND G2year < ?", vars = list(2020, 2025))
+```
+
+## Aggregations
+
+`table$aggregate()` lets the backend perform grouped computations so you only
+transfer summary rows.
+
+```{r agg, eval = FALSE}
+agg <- table$aggregate(
+  group_by = "G2year",
+  filter = "G2year >= 2020 AND G2year < 2025",
+  aggr = list(G2salinity = "mean", G2tco2 = "max")
+)
+print(agg)
+```
+
+`aggr` entries specify which aggregation to apply (`"sum"`, `"min"`, `"max"`,
+`"count"`, or `"mean"`). Expressions such as `h3(geometry, 6)` or
+`bucket(depth, 0, 200, 400)` are accepted in `group_by` to build grid-based
+reports.
+
+## Troubleshooting
+
+- Install `arrow`; the SDK streams IPC batches
+- Increase `timeout` for very large scans
+- Keep API keys secret—never commit them to version control
+
+These pieces let you stitch together pipelines, dashboards, or notebooks that
+work with ODP tabular datasets entirely from R.

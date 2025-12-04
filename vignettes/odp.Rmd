@@ -1,0 +1,120 @@
+---
+title: "Getting Started with the ODP SDK"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{odp}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The Ocean Data Platform (ODP) R SDK provides lightweight helpers for working
+with tabular datasets exposed through the HubOcean API. This vignette walks you
+through installing the package, authenticating, and streaming a dataset into R
+structures that you probably already use.
+
+## Installation
+
+Install straight from GitHub with either `remotes`, `pak`, or `devtools`. The
+examples below assume `remotes`:
+
+```{r install, eval = FALSE}
+install.packages("remotes")  # once per machine
+remotes::install_github("C4IROcean/odp-sdkr")
+```
+
+Load the package once it is installed:
+
+```{r load, eval = FALSE}
+library(odp)
+```
+
+## Authentication
+
+Create a client with an API key. Either pass the key explicitly or set the
+`ODP_API_KEY` environment variable before instantiating the client.
+
+```{r auth, eval = FALSE}
+client <- odp_client(api_key = "Sk_live_your_key")
+
+# or keep the key out of scripts
+Sys.setenv(ODP_API_KEY = "Sk_live_your_key")
+client <- odp_client()
+```
+
+## Working with a Dataset
+
+Use the dataset identifier you normally copy from the HubOcean catalog
+(<https://app.hubocean.earth/catalog>). This vignette references the public
+GLODAP dataset, but you can substitute your own ID.
+
+```{r dataset, eval = FALSE}
+dataset <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
+table <- dataset$table
+```
+
+Inspect the schema and stats to plan queries:
+
+```{r meta, eval = FALSE}
+schema <- table$schema()
+stats <- table$stats()
+```
+
+## Streaming Rows
+
+`table$select()` returns an `OdpCursor` that lazily streams Arrow RecordBatches.
+Iterate over the batches or materialise the results when you are ready.
+
+```{r select, eval = FALSE}
+cursor <- table$select(
+  filter = "depth > $min_depth",
+  vars = list(min_depth = 300),
+  columns = c("latitude", "longitude", "depth"),
+  timeout = 15
+)
+
+while (!is.null(batch <- cursor$next_batch())) {
+  cat("chunk rows:", batch$num_rows, "\n")
+}
+
+df <- cursor$dataframe()
+arrow_tbl <- cursor$arrow()
+# tibble support is optional
+# tib_tbl <- cursor$tibble()
+```
+
+Materialisation helpers (`dataframe()`, `arrow()`, `tibble()`) only drain the
+batches that have not been streamed yet. Create a new cursor if you iterate with
+`next_batch()` and later need the entire result set.
+
+## Aggregations
+
+Let the backend do the heavy lifting when you only need grouped stats.
+
+```{r agg, eval = FALSE}
+agg <- table$aggregate(
+  group_by = "G2year",
+  filter = "G2year >= 2020 AND G2year < 2025",
+  aggr = list(G2salinity = "mean", G2tco2 = "max")
+)
+print(agg)
+```
+
+Each `aggr` entry specifies which reducer to apply (`"sum"`, `"min"`, `"max"`,
+`"count"`, `"mean"`). You can also pass expressions (for example
+`h3(geometry, 6)`) through `group_by`.
+
+## Troubleshooting
+
+- Install the `arrow` package; IPC streams power the transport layer
+- Increase `timeout` for very large scans
+- Keep your `ODP_API_KEY` secret—never commit it to version control
+
+You can now explore ODP datasets from scripts, notebooks, or Shiny dashboards in
+plain R.
