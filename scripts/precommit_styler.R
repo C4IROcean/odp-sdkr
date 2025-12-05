@@ -11,6 +11,6 @@ if (!length(files)) {
   quit(status = 0)
 }
 
-for (path in files) {
-  styler::style_file(path)
-}
+suppressMessages(styler::cache_deactivate())
+
+styler::style_file(files)

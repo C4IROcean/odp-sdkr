@@ -110,6 +110,22 @@ Install optional packages as needed, for example: `install.packages("tibble")`.
 
 ## Development
 
-- Linting/tests: `R -q -e "devtools::test()"`
-- Package metadata lives under `DESCRIPTION`/`NAMESPACE`
-- Unit tests avoid live network calls and use small synthetic Arrow streams
+- Install the package dependencies declared in `DESCRIPTION` and keep a recent
+  version of `devtools`/`pkgload` around for running checks.
+- Run the unit tests with `R -q -e "devtools::test()"` and the full
+  `devtools::check()` suite locally before opening a pull request. Tests use
+  small synthetic Arrow streams, so they never call the live API.
+- The repo ships a `.pre-commit-config.yaml` that runs `lintr` and `styler`
+  through the helper scripts in `scripts/`. Install [pre-commit](https://pre-commit.com)
+  once per machine and enable the hooks with `pre-commit install` to get the
+  same linting enforced in CI.
+- To lint/format everything manually (matching CI), run:
+
+  ```sh
+  Rscript --vanilla scripts/precommit_lintr.R $(git ls-files -- '*.R' '*.r' '*.Rmd' '*.rmd')
+  Rscript --vanilla scripts/precommit_styler.R $(git ls-files -- '*.R' '*.r' '*.Rmd' '*.rmd')
+  ```
+
+- GitHub Actions keeps parity with the local tooling:
+  `.github/workflows/lint-format-test.yml` runs the linters, formatting check,
+  and the package's `testthat` suite (`devtools::test()`) on every push/PR.
