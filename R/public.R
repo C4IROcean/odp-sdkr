@@ -11,7 +11,8 @@
 #' @return An `OdpClient` instance.
 #' @export
 odp_client <- function(api_key = NULL, base_url = NULL) {
-  OdpClient$new(api_key = api_key, base_url = base_url)
+  client_ctor <- get("OdpClient", envir = asNamespace("odp"))
+  client_ctor$new(api_key = api_key, base_url = base_url)
 }
 
 # Public entry points are documented in R/odp-package.R

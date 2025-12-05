@@ -28,7 +28,7 @@ Install the development build straight from GitHub with `remotes`, `pak`, or
 `devtools`. These examples use `remotes`:
 
 ```{r install, eval = FALSE}
-install.packages("remotes")  # once per machine
+install.packages("remotes") # once per machine
 remotes::install_github("C4IROcean/odp-sdkr")
 
 # local checkout? build vignettes so this article is included
