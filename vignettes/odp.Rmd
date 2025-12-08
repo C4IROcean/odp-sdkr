@@ -25,7 +25,7 @@ Install straight from GitHub with either `remotes`, `pak`, or `devtools`. The
 examples below assume `remotes`:
 
 ```{r install, eval = FALSE}
-install.packages("remotes")  # once per machine
+install.packages("remotes") # once per machine
 remotes::install_github("C4IROcean/odp-sdkr")
 ```
 
