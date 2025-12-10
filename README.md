@@ -1,9 +1,21 @@
 # Ocean Data Platform R SDK
 
-Lightweight R bindings for the Ocean Data Platform services.
-The SDK focuses on authenticated access to tabular datasets exposed by the
-HubOcean API and currently provides read-only helpers for inspecting
-metadata and streaming batches into familiar R data structures.
+The Ocean Data Platform (ODP) is a hosted catalog of curated marine and
+environmental datasets. This package provides light-weight R bindings so you can
+authenticate with your HubOcean account, navigate to a dataset, pick a table,
+and stream rows straight into data frames or Arrow tables without leaving your
+analysis workflow. The SDK currently focuses on read-only helpers. More
+capabilities will arrive as the project matures.
+
+When you work with the SDK you will usually touch the following pieces:
+
+- `odp_client()` — holds your API key and issues authenticated requests
+- dataset object — retrieved via `client$dataset("<dataset-id>")`
+- table object — accessed via `dataset$table`
+- cursor — returned from `table$select()` and responsible for paging data
+
+The sections below walk through that flow so anyone landing here (including via
+`?odp`) quickly sees how to get from credentials to a usable tibble.
 
 > Status: This sdk is still considered pre-release. We are looking for feedback,
 > so please reach out if you have any issues, concerns or other ideas that you
@@ -15,10 +27,14 @@ metadata and streaming batches into familiar R data structures.
 - Packages declared in `DESCRIPTION` (install with `pak`, `renv`, or
   `install.packages()`)
 - A valid HubOcean API key exposed as the env variable `ODP_API_KEY` or passed
-directly when creating the client. The API key can be found by visiting ["My account"
-in the wep app](https://app.hubocean.earth/account).
+  directly when creating the client. Grab the key from [My Account in the web
+  app](https://app.hubocean.earth/account).
 
 ## Getting Started
+
+The snippet below shows the full flow: install, authenticate, navigate to a
+dataset, pick a table, and stream the columns you care about. Swap the dataset
+ID for the resources you have access to in the ODP catalog.
 
 ```r
 # install straight from GitHub (requires remotes, pak, or devtools)
@@ -29,11 +45,17 @@ remotes::install_github("C4IROcean/odp-sdkr")
 # remotes::install_local("~/dev/odp_sdkr", build = TRUE, build_vignettes = TRUE)
 
 library(odp)
-client <- odp_client(api_key="Sk_....")
 
-# Use the dataset id from the catalog (example: public GLODAP dataset)
+# 1. Client (API key can come from ODP_API_KEY)
+client <- odp_client(api_key = "Sk_....")
+
+# 2. Dataset (see https://app.hubocean.earth/)
 dataset <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
+
+# 3. Table (defaults to the first table in the dataset)
 table <- dataset$table
+
+# 4. Query – returns a cursor that streams rows lazily
 cursor <- table$select(
   filter = "depth > $min_depth",
   vars = list(min_depth = 300),
@@ -41,22 +63,18 @@ cursor <- table$select(
   timeout = 15
 )
 
-# Materialise the cursor when you want the full result
-result <- cursor$dataframe()
-print(result)
-# optional tidyverse helper (requires the tibble package)
-# tib_result <- cursor$tibble()
+# 5. Fetch table into a dataframe that you can use for analysis
+df <- cursor$dataframe()
 ```
 
 ## Documentation
 
-- `help(package = "odp")` lists all reference topics
-- `vignette("odp")` covers installation, authentication, and cursor basics (requires
-  installing with vignettes built)
-- `vignette("odp-tabular")` focuses on working with tabular datasets: batching,
-  filters, projections, and server-side aggregations (requires installing with
-  vignettes built)
-- Hosted docs: https://docs.hubocean.earth/r_sdk/
+The hosted documentation at https://docs.hubocean.earth/r_sdk/ is the canonical
+place to learn more about authentication, cursors, batching, and advanced
+patterns. Install the package locally and lean on the official docs when you
+need deeper explanations or diagrams.
+
+- `help(package = "odp")` gives a quick index of the exported helpers
 
 ### Streaming rows in batches
 When working with a large table it can be helpful to fetch the table in batches, to do this you can use the next_batch helper to iterate over the batches one by one. The cursor will fetch the pages in chunks in the background when you need them
@@ -129,3 +147,6 @@ Install optional packages as needed, for example: `install.packages("tibble")`.
 - GitHub Actions keeps parity with the local tooling:
   `.github/workflows/lint-format-test.yml` runs the linters, formatting check,
   and the package's `testthat` suite (`devtools::test()`) on every push/PR.
+- Build-able vignettes (`vignette("odp")`, `vignette("odp-tabular")`) ship with
+  the repo; install with `build_vignettes = TRUE` if you want those walkthroughs
+  available offline.
