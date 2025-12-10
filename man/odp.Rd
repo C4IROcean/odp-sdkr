@@ -7,28 +7,120 @@
 \alias{OceanDataPlatform}
 \title{Ocean Data Platform (ODP) R SDK}
 \description{
-Lightweight helpers for authenticating against the HubOcean API, inspecting
-dataset metadata, streaming Arrow RecordBatches, and materialising data into
-common R structures like \code{data.frame}s and tibbles.
+The Ocean Data Platform (ODP) is a hosted catalog of curated marine and
+environmental datasets. This package provides light-weight helpers so you can
+authenticate with your HubOcean account, navigate to a dataset, pick a table,
+and stream rows straight into data frames or Arrow tables without leaving
+your analysis workflow. The SDK currently focuses on read-only helpers. More
+capabilities will arrive as the project matures.
 }
-\section{Getting help}{
-
-Run \code{help(package = "odp")}, \code{browseVignettes("odp")}, or \code{??odp} for
-walkthroughs covering installation, authentication, streaming helpers, and
-aggregations from scripts or notebooks. Hosted docs can be found in our
-official portal \url{https://docs.hubocean.earth/r_sdk/}. When installing from a local checkout,
-build vignettes (\code{remotes::install_local(..., build_vignettes = TRUE)}) so that
-\code{vignette("odp")} and friends are available.
+\details{
+When you work with the SDK you will usually touch the following pieces:
+\itemize{
+\item \code{odp_client()} — holds your API key and issues authenticated requests
+\item dataset object — retrieved via \code{client$dataset("<dataset-id>")}
+\item table object — accessed via \code{dataset$table}
+\item cursor — returned from \code{table$select()} and responsible for paging data
 }
 
-\section{Articles}{
+Status: This SDK is considered pre-release. Please reach out if you have any
+issues, concerns, or ideas that would improve the experience.
+}
+\section{Requirements}{
 
 \itemize{
-\item ODP R SDK overview: \url{https://docs.hubocean.earth/r_sdk/}
-\item \code{vignette("odp")} introduces installation, authentication, and cursors.
-\item \code{vignette("odp-tabular")} focuses on working with tabular datasets: streaming,
-filtering, projections, and aggregations.
+\item R 4.1 or newer
+\item Packages declared in \code{DESCRIPTION}
+\item A valid HubOcean API key exposed as \code{ODP_API_KEY} or passed directly to
+\code{odp_client()}
 }
+}
+
+\section{Getting started}{
+
+The snippet below shows the full flow: install, authenticate, navigate to a
+dataset, pick a table, and stream the columns you care about. Swap the dataset
+id for the resources you have access to in the ODP catalog.
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{install.packages("remotes")  # skip if already installed
+remotes::install_github("C4IROcean/odp-sdkr")
+
+library(odp)
+
+client <- odp_client(api_key = "Sk_....")
+dataset <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
+table <- dataset$table
+
+cursor <- table$select(
+  filter = "depth > $min_depth",
+  vars = list(min_depth = 300),
+  columns = c("latitude", "longitude", "depth"),
+  timeout = 15
+)
+
+df <- cursor$dataframe()
+}\if{html}{\out{</div>}}
+}
+
+\section{Streaming rows in batches}{
+
+When working with a large table it can be helpful to consume batches
+incrementally. The cursor pulls pages in the background as needed.
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{cursor <- table$select()
+while (!is.null(chunk <- cursor$next_batch())) \{
+  print(chunk$num_rows)
+\}
+
+df <- cursor$dataframe()
+arrow_tbl <- cursor$arrow()
+}\if{html}{\out{</div>}}
+
+\code{collect()}/\code{dataframe()}/\code{tibble()}/\code{arrow()} only materialise batches that
+have not been streamed yet. To obtain the full dataset after calling
+\code{next_batch()}, create a fresh cursor and collect before iterating.
+}
+
+\section{Aggregations}{
+
+The SDK supports server-side aggregations so you can compute simple
+statistics without transferring the full table.
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{agg <- table$aggregate(
+  group_by = "'TOTAL'",
+  filter = "depth > 200",
+  aggr = list(depth = "mean")
+)
+print(agg)
+}\if{html}{\out{</div>}}
+}
+
+\section{Metadata helpers}{
+
+Use \code{table$schema()} and \code{table$stats()} to inspect the structure and
+high-level metadata of a dataset.
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{schema <- table$schema()
+str(schema)
+
+stats <- table$stats()
+str(stats)
+}\if{html}{\out{</div>}}
+}
+
+\section{Optional dependencies}{
+
+\code{tibble} is optional and only needed if you plan to call \code{cursor$tibble()}.
+Install optional packages as needed, e.g. \code{install.packages("tibble")}.
+}
+
+\section{Documentation and help}{
+
+Run \code{help(package = "odp")} or \code{??odp} for walkthroughs covering
+installation, authentication, streaming helpers, and aggregations. Hosted docs
+live at \url{https://docs.hubocean.earth/r_sdk/}. If you install the accompanying
+vignettes they are accessible via \code{vignette("odp")} and
+\code{vignette("odp-tabular")}.
 }
 
 \author{
