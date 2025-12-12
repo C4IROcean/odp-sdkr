@@ -34,6 +34,9 @@ OdpCursor <- R6::R6Class(
       }
     },
     collect = function() {
+      # Reset the cursor so that collect() can be called multiple times and so
+      # we get the full table if the cursor has been partially consumed
+      private$reset_cursor()
       batches <- private$drain_batches()
       if (!length(batches)) {
         schema <- private$state$schema
@@ -105,6 +108,18 @@ OdpCursor <- R6::R6Class(
         batches[[length(batches) + 1]] <- batch
       }
       batches
+    },
+    reset_cursor = function() {
+      reader <- private$state$reader
+      if (!is.null(reader) && is.function(reader$close)) {
+        try(reader$close(), silent = TRUE)
+      }
+      private$state <- list(
+        reader = NULL,
+        next_cursor = "",
+        finished = FALSE,
+        schema = NULL
+      )
     }
   )
 )

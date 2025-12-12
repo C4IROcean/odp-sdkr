@@ -69,3 +69,35 @@ test_that("cursor converts into arrow tables, data frames, and tibbles", {
   expect_s3_class(tib, "tbl_df")
   expect_equal(nrow(tib), 2)
 })
+
+test_that("collect resets and closes the active reader", {
+  testthat::skip_if_not_installed("arrow")
+  pages <- list(
+    list(raw = cursor_page_raw(data.frame(id = 1:2)), cursor = "next"),
+    list(raw = cursor_page_raw(data.frame(id = 3:4)), cursor = NULL)
+  )
+  names(pages) <- c(cursor_key(""), cursor_key("next"))
+  cursor <- OdpCursor$new(table = fake_cursor_table(pages), request = fake_cursor_request())
+
+  # Consume a batch to ensure the reader is active
+  first_batch <- cursor$next_batch()
+  expect_s3_class(first_batch, "RecordBatch")
+
+  private <- cursor$.__enclos_env__$private
+  reader <- private$state$reader
+  expect_false(is.null(reader))
+  closed <- FALSE
+  proxy_reader <- new.env(parent = emptyenv())
+  proxy_reader$schema <- reader$schema
+  proxy_reader$read_next_batch <- function(...) reader$read_next_batch(...)
+  proxy_reader$close <- function(...) {
+    closed <<- TRUE
+    reader$close(...)
+  }
+  private$state$reader <- proxy_reader
+
+  tbl <- cursor$collect()
+  expect_true(closed)
+  expect_s3_class(tbl, "Table")
+  expect_equal(tbl$num_rows, 4)
+})
