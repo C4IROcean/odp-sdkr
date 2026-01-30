@@ -31,50 +31,20 @@ The sections below walk through that flow so anyone landing here (including via
 
 ## Authentication
 
-The SDK supports two authentication methods:
-
-### API Key (recommended for scripts and automation)
-
-Get your API key from [My Account in the web
-app](https://app.hubocean.earth/account), then either:
-
-1. Set the `ODP_API_KEY` environment variable:
-   ```r
-   Sys.setenv(ODP_API_KEY = "your-api-key")
-   client <- odp_client()
-   ```
-
-2. Pass it directly to the client:
-   ```r
-   client <- odp_client(api_key = "your-api-key")
-   ```
-
-### Interactive Browser Login (for interactive R sessions)
-
-When no API key is available and you're running in an interactive R session,
-the SDK will automatically open your browser for authentication via HubOcean's
-login page:
+Get your API key from [My Account in the web app](https://app.hubocean.earth/account) and pass it to the client:
 
 ```r
-# No API key set - browser will open for login
+client <- odp_client(api_key = "your-api-key")
+```
+
+Or set the `ODP_API_KEY` environment variable and skip the argument:
+
+```r
+Sys.setenv(ODP_API_KEY = "your-api-key")
 client <- odp_client()
 ```
 
-You can also force interactive authentication:
-
-```r
-client <- odp_client(interactive = TRUE)
-```
-
-Or disable it entirely (useful for CI/scripts where you want a clear error if
-no API key is configured):
-
-```r
-client <- odp_client(interactive = FALSE)
-```
-
-The interactive flow uses OAuth2 with Azure B2C and caches tokens locally, so
-you won't need to re-authenticate on every session.
+When no API key is available in an interactive R session, the SDK will automatically open your browser for authentication via HubOcean's login page. The interactive flow uses OAuth2 with Azure B2C and caches tokens locally, so you won't need to re-authenticate on every session.
 
 ## Getting Started
 
