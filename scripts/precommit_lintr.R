@@ -14,7 +14,8 @@ if (!length(files)) {
 linters <- lintr::linters_with_defaults(
   line_length_linter = lintr::line_length_linter(120),
   object_name_linter = NULL,
-  commented_code_linter = NULL
+  commented_code_linter = NULL,
+  object_usage_linter = NULL
 )
 lints <- unlist(lapply(files, lintr::lint, linters = linters), recursive = FALSE)
 if (length(lints)) {

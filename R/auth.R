@@ -14,7 +14,6 @@ ODP_B2C_SCOPE <- "https://oceandataplatform.onmicrosoft.com/odcat/API_ACCESS"
 #' @keywords internal
 #' @noRd
 odp_b2c_endpoints <- function(tenant = ODP_B2C_TENANT, policy = ODP_B2C_POLICY) {
-
   base <- sprintf(
     "https://%s.b2clogin.com/%s.onmicrosoft.com/%s/oauth2/v2.0",
     tenant, tenant, policy
