@@ -106,8 +106,9 @@ odp_interactive_auth <- function() {
   # Return a function that provides the bearer token
   # httr2 tokens include automatic refresh handling
   function() {
-    # Check if token needs refresh
-    if (httr2::oauth_token_is_expired(token)) {
+    # Check if token needs refresh (expires_at is POSIXct or NULL)
+    is_expired <- !is.null(token$expires_at) && token$expires_at <= Sys.time()
+    if (is_expired) {
       token <<- tryCatch(
         httr2::oauth_flow_refresh(client, token$refresh_token),
         error = function(e) {
