@@ -16,11 +16,8 @@ knitr::opts_chunk$set(
 
 Most ODP workflows revolve around tabular resources exposed through the HubOcean
 API. This vignette focuses on those helpers: inspecting schemas, streaming data
-in batches, projecting and filtering columns, and letting the backend aggregate
-rows for you.
-
-> Scope: writing/mutating tables is still out-of-scope for the SDK. The helpers
-> here are read-only and revolve around authenticated scans of Arrow batches.
+in batches, projecting and filtering columns, letting the backend aggregate
+rows for you, and inserting new data.
 
 ## Installation
 

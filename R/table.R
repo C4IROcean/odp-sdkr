@@ -280,12 +280,13 @@ OdpTable <- R6::R6Class(
     #' @return Invisibly returns the transaction object after commit.
     insert = function(data) {
       tx_response <- self$client$request_json(
-        path = "/api/table/v2/sdk/begin",
+        path = "/api/table/v2/begin",
         query = list(table_id = self$id),
         method = "POST",
         retry = FALSE
       )
       tx_id <- tx_response$tx_id
+
       tx <- tryCatch(
         OdpTransaction$new(self, tx_id),
         error = function(e) {
