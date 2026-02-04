@@ -216,7 +216,6 @@ OdpTable <- R6::R6Class(
       tibble::as_tibble(self$aggregate(...))
     },
     #' @keywords internal
-    #' @noRd
     select_request = function(request, cursor = "", retry = TRUE) {
       if (missing(request) || !is.list(request)) {
         cli::cli_abort("`request` must be a list")
@@ -275,6 +274,44 @@ OdpTable <- R6::R6Class(
         retry = TRUE
       )
       odp_table_stats(payload)
+    },
+    #' Insert data into table
+    #' @param data A data frame to insert.
+    #' @return Invisibly returns the transaction object after commit.
+    insert = function(data) {
+      tx_response <- self$client$request_json(
+        path = "/api/table/v2/sdk/begin",
+        query = list(table_id = self$id),
+        method = "POST",
+        retry = FALSE
+      )
+      tx_id <- tx_response$tx_id
+      tx <- tryCatch(
+        OdpTransaction$new(self, tx_id),
+        error = function(e) {
+          tryCatch(
+            self$client$request_json(
+              path = "/api/table/v2/sdk/rollback",
+              query = list(table_id = self$id, tx_id = tx_id),
+              method = "POST",
+              retry = FALSE
+            ),
+            error = function(...) NULL
+          )
+          stop(e)
+        }
+      )
+      tryCatch(
+        {
+          tx$insert(data)
+          tx$commit()
+          tx
+        },
+        error = function(e) {
+          tryCatch(tx$rollback(), error = function(...) NULL)
+          stop(e)
+        }
+      )
     }
   ),
   private = list(

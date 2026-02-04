@@ -48,8 +48,8 @@ NULL
 NULL
 #' Table helper for streaming rows and computing aggregates
 #'
-#' Exposes the user-facing helpers: `select()` cursors, `aggregate()` for backend
-#' reducers, and read-only metadata calls.
+#' Exposes user-facing helpers: `select()` cursors, `aggregate()` for backend
+#' reducers, `insert()` for writes, and read-only metadata calls.
 #'
 #' @section Methods:
 #' \describe{
@@ -57,6 +57,7 @@ NULL
 #'   Return an [OdpCursor] that lazily streams batches.}
 #'   \item{$aggregate(group_by, filter, aggr, vars, timeout)$}{Compute grouped
 #'   statistics without downloading the entire table.}
+#'   \item{$insert(data)$}{Insert a data frame and auto-commit the transaction.}
 #'   \item{$schema()` / `$stats()`}{Inspect schema details and summary
 #'   statistics.}
 #' }
@@ -69,7 +70,7 @@ NULL
 #' cursor$dataframe()
 #' }
 #'
-#' @seealso [OdpCursor], [OdpDataset]
+#' @seealso [OdpCursor], [OdpDataset], [OdpTransaction]
 #' @name OdpTable
 #' @aliases OdpTable-class OdpTable
 NULL
@@ -102,4 +103,29 @@ NULL
 #' @seealso [OdpTable]
 #' @name OdpCursor
 #' @aliases OdpCursor-class OdpCursor
+NULL
+#' Transaction for inserting data
+#'
+#' Buffers row batches and manages transaction lifecycle. Validates data against
+#' table schema on initialization. Automatically flushes when row or byte thresholds
+#' are reached. Use [OdpTable]`$insert()` for direct usage.
+#'
+#' @section Methods:
+#' \describe{
+#'   \item{$insert(data)$}{Validate and buffer a data frame. Auto-flushes on size thresholds.}
+#'   \item{$commit()$}{Finalize and apply all buffered changes.}
+#'   \item{$rollback()$}{Discard all buffered changes without applying.}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' client <- odp_client(api_key = "Sk_live_your_key")
+#' tbl <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")$table
+#' df <- data.frame(latitude = c(10, 20), longitude = c(30, 40))
+#' tbl$insert(df)
+#' }
+#'
+#' @seealso [OdpTable]
+#' @name OdpTransaction
+#' @aliases OdpTransaction-class OdpTransaction
 NULL

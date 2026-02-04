@@ -145,6 +145,25 @@ print(agg)
 `bucket(depth, 0, 200, 400)` are accepted in `group_by` to build grid-based
 reports.
 
+## Writing data
+
+Use `table$insert()` to add data to a table. Data is validated against the
+table schema (required fields, types, nullability) and automatically committed:
+
+```{r insert, eval = FALSE}
+df <- data.frame(
+  latitude = c(10.5, 20.3, 30.1),
+  longitude = c(-50.2, -40.8, -30.5),
+  depth = c(100L, 200L, 150L),
+  stringsAsFactors = FALSE
+)
+
+table$insert(df)
+```
+
+The SDK buffers rows and auto-flushes at 10,000 rows or 10 MB. Validation
+catches schema mismatches early with helpful error messages.
+
 ## Troubleshooting
 
 - Install `arrow`; the SDK streams IPC batches

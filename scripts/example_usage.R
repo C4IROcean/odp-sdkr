@@ -77,3 +77,13 @@ print(table$stats())
 
 print("\nFetching table schema...")
 print(table$schema())
+
+print("\nInserting sample data...")
+sample_df <- data.frame(
+  latitude = c(10.5, 20.3, 30.1),
+  longitude = c(-50.2, -40.8, -30.5),
+  type = c("coral", "seagrass", "rock"),
+  stringsAsFactors = FALSE
+)
+table$insert(sample_df)
+print("Insert completed successfully")

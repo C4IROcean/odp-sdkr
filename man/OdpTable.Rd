@@ -5,8 +5,8 @@
 \alias{OdpTable-class}
 \title{Table helper for streaming rows and computing aggregates}
 \description{
-Exposes the user-facing helpers: \code{select()} cursors, \code{aggregate()} for backend
-reducers, and read-only metadata calls.
+Exposes user-facing helpers: \code{select()} cursors, \code{aggregate()} for backend
+reducers, \code{insert()} for writes, and read-only metadata calls.
 }
 \section{Methods}{
 
@@ -15,6 +15,7 @@ reducers, and read-only metadata calls.
 Return an \link{OdpCursor} that lazily streams batches.}
 \item{$aggregate(group_by, filter, aggr, vars, timeout)$}{Compute grouped
 statistics without downloading the entire table.}
+\item{$insert(data)$}{Insert a data frame and auto-commit the transaction.}
 \item{$schema()\code{/}$stats()`}{Inspect schema details and summary
 statistics.}
 }
@@ -30,5 +31,5 @@ cursor$dataframe()
 
 }
 \seealso{
-\link{OdpCursor}, \link{OdpDataset}
+\link{OdpCursor}, \link{OdpDataset}, \link{OdpTransaction}
 }
