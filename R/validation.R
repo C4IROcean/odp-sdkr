@@ -10,18 +10,20 @@ odp_validate_insert_data <- function(data, schema) {
   data_cols <- names(data)
   odp_check_required_fields(data_cols, schema)
 
-  for (col_name in data_cols) {
-    field <- schema$GetFieldByName(col_name)
-    col_data <- data[[col_name]]
-    is_nullable <- isTRUE(field$nullable)
+  for (field_name in schema$names) {
+    if (field_name %in% data_cols) {
+      field <- schema$GetFieldByName(field_name)
+      col_data <- data[[field_name]]
+      is_nullable <- isTRUE(field$nullable)
 
-    for (row_idx in seq_len(nrow(data))) {
-      value <- col_data[[row_idx]]
-      if ((is.na(value) || is.null(value)) && !is_nullable) {
-        cli::cli_abort(sprintf(
-          "Non-nullable column '%s' has NULL value at row %d",
-          col_name, row_idx
-        ))
+      for (row_idx in seq_len(nrow(data))) {
+        value <- col_data[[row_idx]]
+        if ((is.na(value) || is.null(value)) && !is_nullable) {
+          cli::cli_abort(sprintf(
+            "Non-nullable column '%s' has NULL value at row %d",
+            field_name, row_idx
+          ))
+        }
       }
     }
   }
