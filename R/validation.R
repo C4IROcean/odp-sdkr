@@ -36,4 +36,3 @@ odp_check_required_fields <- function(data_cols, schema) {
     }
   }
 }
-

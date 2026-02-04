@@ -66,5 +66,3 @@ test_that("validation rejects missing required field in dict-like insert", {
     "Missing required column"
   )
 })
-
-
