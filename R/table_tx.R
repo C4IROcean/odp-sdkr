@@ -82,11 +82,16 @@ OdpTransaction <- R6::R6Class(
         return()
       }
 
-      # Serialize all batches and combine
-      all_bytes <- raw(0)
+      # create arrow ipc stream with schema header + record batches
+      buf <- arrow::BufferOutputStream$create()
+      writer <- arrow::RecordBatchStreamWriter$create(buf, schema = private$schema)
+
       for (batch in private$batches) {
-        all_bytes <- c(all_bytes, batch$serialize())
+        writer$write_batch(batch)
       }
+      writer$close()
+
+      all_bytes <- buf$finish()$data()
 
       private$table$client$request_arrow(
         path = "/api/table/v2/sdk/insert",
@@ -95,7 +100,7 @@ OdpTransaction <- R6::R6Class(
         retry = TRUE
       )
 
-      # Reset buffer for next batch of inserts
+      # reset buffers
       private$batches <- list()
       private$row_count <- 0L
       private$byte_count <- 0L
