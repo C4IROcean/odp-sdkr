@@ -292,7 +292,7 @@ OdpTable <- R6::R6Class(
         error = function(e) {
           tryCatch(
             self$client$request_json(
-              path = "/api/table/v2/sdk/rollback",
+              path = "/api/table/v2/rollback",
               query = list(table_id = self$id, tx_id = tx_id),
               method = "POST",
               retry = FALSE

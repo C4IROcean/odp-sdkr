@@ -47,7 +47,7 @@ OdpTransaction <- R6::R6Class(
         private$flush()
       }
       private$table$client$request_json(
-        path = "/api/table/v2/sdk/commit",
+        path = "/api/table/v2/commit",
         query = list(table_id = private$table$id, tx_id = private$tx_id),
         method = "POST",
         retry = FALSE
@@ -60,7 +60,7 @@ OdpTransaction <- R6::R6Class(
         cli::cli_abort("Cannot rollback a committed transaction")
       }
       private$table$client$request_json(
-        path = "/api/table/v2/sdk/rollback",
+        path = "/api/table/v2/rollback",
         query = list(table_id = private$table$id, tx_id = private$tx_id),
         method = "POST",
         retry = FALSE
