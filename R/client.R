@@ -94,7 +94,18 @@ OdpClient <- R6::R6Class(
         return(function() paste("ApiKey", env_key))
       }
 
-      # 3. Try interactive authentication if allowed
+      # 3. Check JUPYTERHUB_API_TOKEN environment variable (JupyterHub environment)
+      if (nzchar(Sys.getenv("JUPYTERHUB_API_TOKEN", unset = ""))) {
+        return(function() {
+          resp <- httr2::request("http://localhost:8000/access_token") |>
+            httr2::req_method("POST") |>
+            httr2::req_perform()
+          token <- httr2::resp_body_json(resp)[["token"]]
+          paste("Bearer", token)
+        })
+      }
+
+      # 4. Try interactive authentication if allowed
       # interactive = NULL means "auto" (use if in interactive session)
       # interactive = TRUE means "force interactive"
       # interactive = FALSE means "disable interactive"
