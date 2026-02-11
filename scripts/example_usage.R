@@ -32,7 +32,7 @@ dataset_id <- "21b630bb-06b2-48de-a172-97a7a67e30ba" # amazon reef
 
 # Initialize the client
 client <- odp_client(api_key = api_key)
-# Or simply default to interactive browser login or ODP_API_KEY env var: 
+# Or simply default to interactive browser login or ODP_API_KEY env var:
 # client <- odp_client()
 
 # Selecting the dataset and table in the same way we do for the python sdk
