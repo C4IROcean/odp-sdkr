@@ -4,10 +4,12 @@ OdpDataset <- R6::R6Class(
     id = NULL,
     client = NULL,
     table = NULL,
+    files = NULL,
     initialize = function(client, dataset_id) {
       self$client <- client
       self$id <- odp_validate_id(dataset_id)
       self$table <- OdpTable$new(client, self$id)
+      self$files <- self$table$raw
     }
   )
 )

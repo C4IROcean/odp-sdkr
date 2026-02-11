@@ -103,3 +103,47 @@ NULL
 #' @name OdpCursor
 #' @aliases OdpCursor-class OdpCursor
 NULL
+#' Raw file storage helper for upload/download/management
+#'
+#' Provides methods for managing raw files attached to a table. Access via
+#' `$table$raw` on a dataset or `$raw` on a table. A convenience alias `$files`
+#' is available on [OdpDataset].
+#'
+#' @section Methods:
+#' \describe{
+#'   \item{$list(query = NULL, vars = NULL)$}{List files, optionally filtered.}
+#'   \item{$list_batches(query = NULL, vars = NULL)$}{List files as an Arrow
+#'   Table.}
+#'   \item{$upload(name, data)$}{Upload a file; returns the raw file ID.}
+#'   \item{$download(id)$}{Download a file; returns a raw vector.}
+#'   \item{$delete(id)$}{Delete a file by ID.}
+#'   \item{$update_meta(id, data)$}{Update metadata for a file.}
+#'   \item{$ingest(id, opt = "append")$}{Ingest a file into the table. `opt` can
+#'   be "append", "truncate", or "drop".}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' client <- odp_client(api_key = "Sk_live_your_key")
+#' ds <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
+#'
+#' # Upload a file
+#' file_id <- ds$files$upload("data.csv", "a,b,c\\n1,2,3\\n")
+#'
+#' # List files
+#' ds$files$list()
+#'
+#' # Download
+#' content <- ds$files$download(file_id)
+#'
+#' # Ingest into table
+#' ds$files$ingest(file_id)
+#'
+#' # Delete
+#' ds$files$delete(file_id)
+#' }
+#'
+#' @seealso [OdpTable], [OdpDataset]
+#' @name OdpRaw
+#' @aliases OdpRaw-class OdpRaw
+NULL

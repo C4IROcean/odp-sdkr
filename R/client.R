@@ -33,7 +33,22 @@ OdpClient <- R6::R6Class(
         retry = retry
       )
       private$handle_response(resp, context = sprintf("JSON request to %s", path), allow_no_content = FALSE)
-      httr2::resp_body_json(resp, simplifyVector = FALSE)
+      if (!httr2::resp_has_body(resp)) {
+        return(NULL)
+      }
+      httr2::resp_body_json(resp, simplifyVector = FALSE, check_type = FALSE)
+    },
+    request_raw = function(path, query = NULL, body = NULL, method = "POST", retry = TRUE) {
+      resp <- private$request(
+        path = path,
+        query = query,
+        body = body,
+        method = method,
+        accept = "application/octet-stream",
+        retry = retry
+      )
+      private$handle_response(resp, context = sprintf("Raw request to %s", path), allow_no_content = FALSE)
+      httr2::resp_body_raw(resp)
     }
   ),
   private = list(
