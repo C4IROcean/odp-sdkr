@@ -3,10 +3,12 @@ OdpTable <- R6::R6Class(
   public = list(
     id = NULL,
     client = NULL,
+    raw = NULL,
     initialize = function(client, table_id) {
       require_dependency("arrow", "Tablular data")
       self$client <- client
       self$id <- odp_validate_id(table_id)
+      self$raw <- OdpRaw$new(self)
     },
     select = function(filter = "", columns = NULL, vars = NULL, timeout = 30) {
       request <- list(

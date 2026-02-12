@@ -110,6 +110,37 @@ Each `aggr` entry specifies which reducer to apply (`"sum"`, `"min"`, `"max"`,
 `"count"`, `"mean"`). You can also pass expressions (for example
 `h3(geometry, 6)`) through `group_by`.
 
+## File Handling
+
+Datasets can also hold raw files—CSVs, Parquet, or any other format. Access the
+file API through `dataset$files` (a shortcut for `dataset$table$raw`).
+
+```{r files, eval = FALSE}
+# Upload a file (character string or raw vector)
+file_id <- dataset$files$upload("data.csv", "lat,lon,depth\n59.5,5.3,120\n")
+
+# Or upload from disk
+raw_bytes <- readBin("local.parquet", "raw", file.info("local.parquet")$size)
+file_id2 <- dataset$files$upload("local.parquet", raw_bytes)
+
+# List files
+dataset$files$list()
+
+# Download (returns a raw vector)
+content <- dataset$files$download(file_id)
+cat(rawToChar(content))
+
+# Ingest the file into the table
+# Modes: "append" (default), "truncate", or "drop"
+dataset$files$ingest(file_id, opt = "append")
+
+# Update metadata
+dataset$files$update_meta(file_id, list(source = "field_survey"))
+
+# Delete
+dataset$files$delete(file_id)
+```
+
 ## Troubleshooting
 
 - Install the `arrow` package; IPC streams power the transport layer

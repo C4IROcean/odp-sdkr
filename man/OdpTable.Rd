@@ -8,6 +8,14 @@
 Exposes the user-facing helpers: \code{select()} cursors, \code{aggregate()} for backend
 reducers, and read-only metadata calls.
 }
+\section{Fields}{
+
+\describe{
+\item{$raw}{An \link{OdpRaw} handle for managing raw files attached to this
+table. Also accessible as \code{dataset$files}.}
+}
+}
+
 \section{Methods}{
 
 \describe{
@@ -30,5 +38,5 @@ cursor$dataframe()
 
 }
 \seealso{
-\link{OdpCursor}, \link{OdpDataset}
+\link{OdpCursor}, \link{OdpDataset}, \link{OdpRaw}
 }

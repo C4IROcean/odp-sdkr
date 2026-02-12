@@ -47,6 +47,31 @@ odp_as_character_vector <- function(x, allow_null = TRUE) {
   as.character(x)
 }
 
+#' Inline bind variables into a query string.
+#'
+#' Replaces \code{$name} placeholders in \code{query} with the
+#' corresponding values from \code{vars}.  String values are
+#' single-quoted; other scalars are formatted as-is.
+#'
+#' @keywords internal
+#' @noRd
+odp_inline_vars <- function(query, vars) {
+  if (is.null(query) || is.null(vars)) {
+    return(query)
+  }
+  prepared <- odp_prepare_bindings(vars)
+  for (name in names(prepared)) {
+    value <- prepared[[name]]
+    replacement <- if (is.character(value)) {
+      sprintf("'%s'", gsub("'", "''", value))
+    } else {
+      as.character(value)
+    }
+    query <- sub(sprintf("$%s", name), replacement, query, fixed = TRUE)
+  }
+  query
+}
+
 #' Prepare bind variables for a query
 #'
 #' Normalises mixed inputs (named vectors, lists, or single-row data frames)
