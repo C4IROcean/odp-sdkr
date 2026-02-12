@@ -29,6 +29,14 @@ NULL
 #' Wraps a HubOcean dataset identifier and exposes the tabular helper via the
 #' `$table` field.
 #'
+#' @section Fields:
+#' \describe{
+#'   \item{$table}{An [OdpTable] handle for streaming rows and computing
+#'   aggregates.}
+#'   \item{$files}{An [OdpRaw] handle for uploading, downloading, and managing
+#'   raw files attached to the dataset.}
+#' }
+#'
 #' @section Methods:
 #' \describe{
 #'   \item{$new(client, dataset_id)$}{Validate the dataset id and eagerly create
@@ -40,9 +48,14 @@ NULL
 #' client <- odp_client(api_key = "Sk_live_your_key")
 #' dataset <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
 #' dataset$table$schema()
+#'
+#' # Upload and manage files
+#' file_id <- dataset$files$upload("data.csv", "a,b\n1,2\n")
+#' dataset$files$list()
+#' dataset$files$download(file_id)
 #' }
 #'
-#' @seealso [OdpClient], [OdpTable]
+#' @seealso [OdpClient], [OdpTable], [OdpRaw]
 #' @name OdpDataset
 #' @aliases OdpDataset-class OdpDataset
 NULL
@@ -50,6 +63,12 @@ NULL
 #'
 #' Exposes the user-facing helpers: `select()` cursors, `aggregate()` for backend
 #' reducers, and read-only metadata calls.
+#'
+#' @section Fields:
+#' \describe{
+#'   \item{$raw}{An [OdpRaw] handle for managing raw files attached to this
+#'   table. Also accessible as `dataset$files`.}
+#' }
 #'
 #' @section Methods:
 #' \describe{
@@ -69,7 +88,7 @@ NULL
 #' cursor$dataframe()
 #' }
 #'
-#' @seealso [OdpCursor], [OdpDataset]
+#' @seealso [OdpCursor], [OdpDataset], [OdpRaw]
 #' @name OdpTable
 #' @aliases OdpTable-class OdpTable
 NULL

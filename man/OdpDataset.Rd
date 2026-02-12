@@ -8,6 +8,16 @@
 Wraps a HubOcean dataset identifier and exposes the tabular helper via the
 \verb{$table} field.
 }
+\section{Fields}{
+
+\describe{
+\item{$table}{An \link{OdpTable} handle for streaming rows and computing
+aggregates.}
+\item{$files}{An \link{OdpRaw} handle for uploading, downloading, and managing
+raw files attached to the dataset.}
+}
+}
+
 \section{Methods}{
 
 \describe{
@@ -21,9 +31,14 @@ the table helper.}
 client <- odp_client(api_key = "Sk_live_your_key")
 dataset <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
 dataset$table$schema()
+
+# Upload and manage files
+file_id <- dataset$files$upload("data.csv", "a,b\n1,2\n")
+dataset$files$list()
+dataset$files$download(file_id)
 }
 
 }
 \seealso{
-\link{OdpClient}, \link{OdpTable}
+\link{OdpClient}, \link{OdpTable}, \link{OdpRaw}
 }

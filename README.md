@@ -4,8 +4,8 @@ The Ocean Data Platform (ODP) is a hosted catalog of curated marine and
 environmental datasets. This package provides light-weight R bindings so you can
 authenticate with your HubOcean account, navigate to a dataset, pick a table,
 and stream rows straight into data frames or Arrow tables without leaving your
-analysis workflow. The SDK currently focuses on read-only helpers. More
-capabilities will arrive as the project matures.
+analysis workflow. The SDK supports streaming queries, server-side aggregations,
+and raw file management (upload, download, ingest).
 
 When you work with the SDK you will usually touch the following pieces:
 
@@ -13,6 +13,7 @@ When you work with the SDK you will usually touch the following pieces:
 - dataset object — retrieved via `client$dataset("<dataset-id>")`
 - table object — accessed via `dataset$table`
 - cursor — returned from `table$select()` and responsible for paging data
+- files — accessed via `dataset$files` for raw file upload/download/ingest
 
 The sections below walk through that flow so anyone landing here (including via
 `?odp`) quickly sees how to get from credentials to a usable tibble.
@@ -126,6 +127,29 @@ print(agg)
 
 > Pass an `aggr` named list where each entry specifies how the column should be
 > aggregated (`"sum"`, `"min"`, `"max"`, `"count"`, `"mean"`).
+
+### File handling
+
+Datasets can also hold raw files. The `$files` helper (an alias for
+`$table$raw`) lets you upload, list, download, ingest and delete files.
+
+```r
+# Upload a file (accepts a character string or raw vector)
+file_id <- dataset$files$upload("measurements.csv", "lat,lon,depth\n59.5,5.3,120\n")
+
+# List files attached to the dataset
+dataset$files$list()
+
+# Download returns a raw vector
+content <- dataset$files$download(file_id)
+cat(rawToChar(content))
+
+# Ingest the file into the table (modes: "append", "truncate", "drop")
+dataset$files$ingest(file_id)
+
+# Delete the file
+dataset$files$delete(file_id)
+```
 
 ### Metadata helpers
 ```r
