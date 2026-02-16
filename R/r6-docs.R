@@ -29,6 +29,14 @@ NULL
 #' Wraps a HubOcean dataset identifier and exposes the tabular helper via the
 #' `$table` field.
 #'
+#' @section Fields:
+#' \describe{
+#'   \item{$table}{An [OdpTable] handle for streaming rows and computing
+#'   aggregates.}
+#'   \item{$files}{An [OdpRaw] handle for uploading, downloading, and managing
+#'   raw files attached to the dataset.}
+#' }
+#'
 #' @section Methods:
 #' \describe{
 #'   \item{$new(client, dataset_id)$}{Validate the dataset id and eagerly create
@@ -40,9 +48,14 @@ NULL
 #' client <- odp_client(api_key = "Sk_live_your_key")
 #' dataset <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
 #' dataset$table$schema()
+#'
+#' # Upload and manage files
+#' file_id <- dataset$files$upload("data.csv", "a,b\n1,2\n")
+#' dataset$files$list()
+#' dataset$files$download(file_id)
 #' }
 #'
-#' @seealso [OdpClient], [OdpTable]
+#' @seealso [OdpClient], [OdpTable], [OdpRaw]
 #' @name OdpDataset
 #' @aliases OdpDataset-class OdpDataset
 NULL
@@ -50,6 +63,12 @@ NULL
 #'
 #' Exposes user-facing helpers: `select()` cursors, `aggregate()` for backend
 #' reducers, `insert()` for writes, and read-only metadata calls.
+#'
+#' @section Fields:
+#' \describe{
+#'   \item{$raw}{An [OdpRaw] handle for managing raw files attached to this
+#'   table. Also accessible as `dataset$files`.}
+#' }
 #'
 #' @section Methods:
 #' \describe{
@@ -70,7 +89,7 @@ NULL
 #' cursor$dataframe()
 #' }
 #'
-#' @seealso [OdpCursor], [OdpDataset], [OdpTransaction]
+#' @seealso [OdpCursor], [OdpDataset], [OdpTransaction], [OdpRaw]
 #' @name OdpTable
 #' @aliases OdpTable-class OdpTable
 NULL
@@ -131,4 +150,48 @@ NULL
 #' @seealso [OdpTable]
 #' @name OdpTransaction
 #' @aliases OdpTransaction-class OdpTransaction
+NULL
+#' Raw file storage helper for upload/download/management
+#'
+#' Provides methods for managing raw files attached to a table. Access via
+#' `$table$raw` on a dataset or `$raw` on a table. A convenience alias `$files`
+#' is available on [OdpDataset].
+#'
+#' @section Methods:
+#' \describe{
+#'   \item{$list(query = NULL, vars = NULL)$}{List files, optionally filtered.}
+#'   \item{$list_batches(query = NULL, vars = NULL)$}{List files as an Arrow
+#'   Table.}
+#'   \item{$upload(name, data)$}{Upload a file; returns the raw file ID.}
+#'   \item{$download(id)$}{Download a file; returns a raw vector.}
+#'   \item{$delete(id)$}{Delete a file by ID.}
+#'   \item{$update_meta(id, data)$}{Update metadata for a file.}
+#'   \item{$ingest(id, opt = "append")$}{Ingest a file into the table. `opt` can
+#'   be "append", "truncate", or "drop".}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' client <- odp_client(api_key = "Sk_live_your_key")
+#' ds <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
+#'
+#' # Upload a file
+#' file_id <- ds$files$upload("data.csv", "a,b,c\\n1,2,3\\n")
+#'
+#' # List files
+#' ds$files$list()
+#'
+#' # Download
+#' content <- ds$files$download(file_id)
+#'
+#' # Ingest into table
+#' ds$files$ingest(file_id)
+#'
+#' # Delete
+#' ds$files$delete(file_id)
+#' }
+#'
+#' @seealso [OdpTable], [OdpDataset]
+#' @name OdpRaw
+#' @aliases OdpRaw-class OdpRaw
 NULL

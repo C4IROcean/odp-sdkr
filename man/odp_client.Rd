@@ -4,14 +4,23 @@
 \alias{odp_client}
 \title{Create an Ocean Data Platform client}
 \usage{
-odp_client(api_key = NULL, base_url = NULL)
+odp_client(api_key = NULL, base_url = NULL, interactive = NULL)
 }
 \arguments{
 \item{api_key}{Optional API key. Falls back to the \code{ODP_API_KEY}
-environment variable when omitted.}
+environment variable when omitted. If no API key is available and
+running interactively, browser-based authentication will be used.}
 
 \item{base_url}{Optional base URL. Defaults to the public API endpoint or
 \code{ODP_BASE_URL} when set.}
+
+\item{interactive}{Control interactive authentication behavior:
+\itemize{
+\item \code{NULL} (default): Use interactive auth automatically when in an
+interactive session and no API key is available.
+\item \code{TRUE}: Force interactive authentication (will fail if not interactive).
+\item \code{FALSE}: Disable interactive authentication entirely.
+}}
 }
 \value{
 An \code{OdpClient} instance.
@@ -19,4 +28,19 @@ An \code{OdpClient} instance.
 \description{
 The helper mirrors the Python SDK entry point while defaulting to the
 production HubOcean endpoint.
+}
+\examples{
+\dontrun{
+# Use API key from environment
+client <- odp_client()
+
+# Explicit API key
+client <- odp_client(api_key = "your-api-key")
+
+# Force interactive browser login
+client <- odp_client(interactive = TRUE)
+
+# Disable interactive auth (error if no API key)
+client <- odp_client(interactive = FALSE)
+}
 }
