@@ -220,6 +220,7 @@ OdpTable <- R6::R6Class(
       if (missing(request) || !is.list(request)) {
         cli::cli_abort("`request` must be a list")
       }
+      operation <- request$operation %||% "select"
       body <- list(
         query = request$filter %||% "",
         cols = odp_as_character_vector(request$columns, allow_null = TRUE),
@@ -228,9 +229,13 @@ OdpTable <- R6::R6Class(
         cursor = as.character(cursor %||% "")
       )
       body <- body[!vapply(body, is.null, logical(1))]
+      query_params <- list(table_id = self$id)
+      if (!is.null(request$tx_id)) {
+        query_params$tx_id <- request$tx_id
+      }
       raw_stream <- self$client$request_arrow(
-        path = "/api/table/v2/sdk/select",
-        query = list(table_id = self$id),
+        path = sprintf("/api/table/v2/sdk/%s", operation),
+        query = query_params,
         body = body,
         retry = retry
       )

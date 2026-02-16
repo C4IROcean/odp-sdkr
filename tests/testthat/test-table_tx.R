@@ -37,6 +37,9 @@ FakeTableTx <- R6::R6Class(
     },
     schema = function() {
       self$schema_obj
+    },
+    select_request = function(request, cursor = "", retry = TRUE) {
+      list(arrow = raw(0), cursor = NULL, trailer = NULL)
     }
   )
 )
@@ -155,4 +158,61 @@ test_that("transaction fails rollback if already committed", {
     tx$rollback(),
     "Cannot rollback a committed transaction"
   )
+})
+test_that("transaction select returns a cursor", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(x = arrow::int64(), y = arrow::string())
+  client <- FakeTxClient$new()
+  table <- FakeTableTx$new(client, schema)
+
+  tx <- OdpTransaction$new(table, "tx-123")
+  cursor <- tx$select(filter = "x > 5")
+  expect_true(inherits(cursor, "OdpCursor"))
+})
+
+test_that("transaction replace requires a filter", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(x = arrow::int64())
+  client <- FakeTxClient$new()
+  table <- FakeTableTx$new(client, schema)
+
+  tx <- OdpTransaction$new(table, "tx-123")
+  expect_error(
+    tx$replace(),
+    "For your own safety, a filter is required"
+  )
+})
+
+test_that("transaction replace with filter returns a cursor", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(x = arrow::int64())
+  client <- FakeTxClient$new()
+  table <- FakeTableTx$new(client, schema)
+
+  tx <- OdpTransaction$new(table, "tx-123")
+  cursor <- tx$replace(filter = "x > 10")
+  expect_true(inherits(cursor, "OdpCursor"))
+})
+
+test_that("transaction replace accepts query parameter", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(x = arrow::int64())
+  client <- FakeTxClient$new()
+  table <- FakeTableTx$new(client, schema)
+
+  tx <- OdpTransaction$new(table, "tx-123")
+  cursor <- tx$replace(query = "x <= 5")
+  expect_true(inherits(cursor, "OdpCursor"))
+})
+
+test_that("transaction delete returns row count", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(x = arrow::int64())
+  client <- FakeTxClient$new()
+  table <- FakeTableTx$new(client, schema)
+
+  tx <- OdpTransaction$new(table, "tx-123")
+  count <- tx$delete(query = "x == 0")
+  expect_true(is.integer(count))
+  expect_equal(count, 0L)
 })

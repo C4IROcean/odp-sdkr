@@ -39,6 +39,39 @@ OdpTransaction <- R6::R6Class(
 
       invisible(self)
     },
+    select = function(filter = "", vars = NULL) {
+      private$flush()
+      request <- list(
+        filter = filter %||% "",
+        vars = vars,
+        tx_id = private$tx_id
+      )
+      OdpCursor$new(table = private$table, request = request)
+    },
+    replace = function(filter = "", vars = NULL, ...) {
+      filter <- if (nzchar(filter %||% "")) filter else list(...)$query %||% ""
+      if (!nzchar(filter)) {
+        cli::cli_abort("For your own safety, a filter is required, use \"1==1\" to match all rows")
+      }
+      private$flush()
+      request <- list(
+        filter = filter,
+        vars = vars,
+        tx_id = private$tx_id,
+        operation = "replace"
+      )
+      OdpCursor$new(table = private$table, request = request)
+    },
+    delete = function(query = "") {
+      ct <- 0L
+      cursor <- self$replace(filter = query)
+      repeat {
+        batch <- cursor$next_batch()
+        if (is.null(batch)) break
+        ct <- ct + batch$num_rows
+      }
+      ct
+    },
     commit = function() {
       if (isTRUE(private$committed)) {
         cli::cli_abort("Transaction already committed")

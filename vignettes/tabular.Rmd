@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 Most ODP workflows revolve around tabular resources exposed through the HubOcean
 API. This vignette focuses on those helpers: inspecting schemas, streaming data
 in batches, projecting and filtering columns, letting the backend aggregate
-rows for you, and inserting new data.
+rows for you, and modifying data (inserting, replacing, or deleting rows).
 
 ## Installation
 
@@ -156,6 +156,23 @@ df <- data.frame(
 )
 
 table$insert(df)
+```
+
+For multi-step workflows (insert, replace, delete in a single transaction),
+start a transaction explicitly:
+
+```{r txn, eval = FALSE}
+df_new <- data.frame(depth = c(250L, 300L), stringsAsFactors = FALSE)
+tbl$client$request_json(
+  path = "/api/table/v2/begin",
+  query = list(table_id = tbl$id),
+  method = "POST"  
+) -> resp
+
+tx <- OdpTransaction$new(tbl, resp$tx_id)
+tx$insert(df_new)
+tx$delete(query = "depth < 50")
+tx$commit()
 ```
 
 The SDK buffers rows and auto-flushes at 10,000 rows or 10 MB. Validation

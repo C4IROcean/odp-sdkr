@@ -104,15 +104,18 @@ NULL
 #' @name OdpCursor
 #' @aliases OdpCursor-class OdpCursor
 NULL
-#' Transaction for inserting data
+#' Transaction for inserting, replacing, and deleting data
 #'
 #' Buffers row batches and manages transaction lifecycle. Validates data against
 #' table schema on initialization. Automatically flushes when row or byte thresholds
-#' are reached. Use [OdpTable]`$insert()` for direct usage.
+#' are reached. Use [OdpTable]`$insert()` for direct usage or manual transactions
+#' for multi-step workflows.
 #'
 #' @section Methods:
 #' \describe{
 #'   \item{$insert(data)$}{Validate and buffer a data frame. Auto-flushes on size thresholds.}
+#'   \item{$replace(filter, vars)$}{Remove rows matching the filter and return them in a cursor.}
+#'   \item{$delete(query)$}{Delete rows matching the query. Returns row count.}
 #'   \item{$commit()$}{Finalize and apply all buffered changes.}
 #'   \item{$rollback()$}{Discard all buffered changes without applying.}
 #' }
