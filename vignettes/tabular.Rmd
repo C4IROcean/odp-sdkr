@@ -163,13 +163,7 @@ start a transaction explicitly:
 
 ```{r txn, eval = FALSE}
 df_new <- data.frame(depth = c(250L, 300L), stringsAsFactors = FALSE)
-resp <- tbl$client$request_json(
-  path = "/api/table/v2/begin",
-  query = list(table_id = tbl$id),
-  method = "POST"
-)
-
-tx <- OdpTransaction$new(tbl, resp$tx_id)
+tx <- table$begin()
 tx$insert(df_new)
 tx$delete(query = "depth < 50")
 tx$commit()

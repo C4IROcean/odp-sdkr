@@ -282,10 +282,7 @@ OdpTable <- R6::R6Class(
       )
       odp_table_stats(payload)
     },
-    #' Insert data into table
-    #' @param data A data frame to insert.
-    #' @return Invisibly returns the transaction object after commit.
-    insert = function(data) {
+    begin = function() {
       tx_response <- self$client$request_json(
         path = "/api/table/v2/begin",
         query = list(table_id = self$id),
@@ -294,7 +291,7 @@ OdpTable <- R6::R6Class(
       )
       tx_id <- tx_response$tx_id
 
-      tx <- tryCatch(
+      tryCatch(
         OdpTransaction$new(self, tx_id),
         error = function(e) {
           tryCatch(
@@ -309,6 +306,12 @@ OdpTable <- R6::R6Class(
           stop(e)
         }
       )
+    },
+    #' Insert data into table
+    #' @param data A data frame to insert.
+    #' @return Invisibly returns the transaction object after commit.
+    insert = function(data) {
+      tx <- self$begin()
       tryCatch(
         {
           tx$insert(data)
