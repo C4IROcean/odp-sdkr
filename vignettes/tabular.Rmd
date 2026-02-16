@@ -163,11 +163,11 @@ start a transaction explicitly:
 
 ```{r txn, eval = FALSE}
 df_new <- data.frame(depth = c(250L, 300L), stringsAsFactors = FALSE)
-tbl$client$request_json(
+resp <- tbl$client$request_json(
   path = "/api/table/v2/begin",
   query = list(table_id = tbl$id),
-  method = "POST"  
-) -> resp
+  method = "POST"
+)
 
 tx <- OdpTransaction$new(tbl, resp$tx_id)
 tx$insert(df_new)
