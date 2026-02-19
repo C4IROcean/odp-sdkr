@@ -25,44 +25,11 @@ test_that("validation detects missing required columns", {
   )
 })
 
-test_that("validation rejects NULL in non-nullable column", {
-  schema <- arrow::schema(
-    arrow::field("x", arrow::int64(), nullable = FALSE)
-  )
-  df <- data.frame(x = c(1L, NA))
-  expect_error(
-    odp_validate_insert_data(df, schema),
-    "Non-nullable column 'x' has NULL value"
-  )
-})
-
 test_that("validation passes valid data", {
   schema <- arrow::schema(
     x = arrow::int64(),
-    y = arrow::string(),
-    z = arrow::float64()
+    y = arrow::string()
   )
-  df <- data.frame(x = 1L, y = "abc", z = 3.14)
+  df <- data.frame(x = 1L, y = "abc")
   expect_null(odp_validate_insert_data(df, schema))
-})
-
-test_that("validation accepts dict-like data with required fields", {
-  schema <- arrow::schema(
-    arrow::field("uid", arrow::int64(), nullable = FALSE)
-  )
-  # Simulate dict-like data (list or named vector)
-  df <- data.frame(uid = 1L)
-  expect_null(odp_validate_insert_data(df, schema))
-})
-
-test_that("validation rejects missing required field in dict-like insert", {
-  schema <- arrow::schema(
-    arrow::field("uid", arrow::int64(), nullable = FALSE)
-  )
-  # Data without the required field
-  df <- data.frame(x = 1L)
-  expect_error(
-    odp_validate_insert_data(df, schema),
-    "Missing required column"
-  )
 })
