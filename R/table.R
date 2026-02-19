@@ -282,6 +282,34 @@ OdpTable <- R6::R6Class(
       )
       odp_table_stats(payload)
     },
+    create = function(arg = NULL) {
+      if (is.null(arg)) {
+        cli::cli_abort("`arg` must be provided (Schema, data frame, RecordBatch, or Arrow Table)")
+      }
+
+      tbl <- odp_to_arrow_table(arg)
+      schema_to_send <- tbl$schema
+      if (is.null(schema_to_send)) {
+        cli::cli_abort("Unable to infer schema")
+      }
+
+      buf <- arrow::BufferOutputStream$create()
+      arrow::write_ipc_stream(arrow::Table$create(schema = schema_to_send), buf)
+      all_bytes <- buf$finish()$data()
+
+      self$client$request_arrow(
+        path = "/api/table/v2/sdk/create",
+        query = list(table_id = self$id),
+        body = all_bytes,
+        retry = FALSE
+      )
+
+      if (nrow(tbl) > 0L) {
+        self$insert(tbl)
+      }
+
+      invisible(self)
+    },
     begin = function() {
       tx_response <- self$client$request_json(
         path = "/api/table/v2/begin",
@@ -308,9 +336,10 @@ OdpTable <- R6::R6Class(
       )
     },
     #' Insert data into table
-    #' @param data A data frame to insert.
+    #' @param data A data frame, Arrow Table, RecordBatch, or Schema to insert.
     #' @return Invisibly returns the transaction object after commit.
     insert = function(data) {
+      data <- odp_to_arrow_table(data)
       tx <- self$begin()
       tryCatch(
         {

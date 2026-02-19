@@ -18,25 +18,22 @@ OdpTransaction <- R6::R6Class(
       if (isTRUE(private$committed)) {
         cli::cli_abort("Cannot insert into a committed transaction")
       }
-      if (!is.data.frame(data)) {
-        cli::cli_abort("`data` must be a data frame")
-      }
-      if (!nrow(data)) {
+      data <- odp_to_arrow_table(data)
+      if (data$num_rows == 0L) {
         return(invisible(self))
       }
+      reader <- arrow::as_record_batch_reader(data)
+      while (TRUE) {
+        batch <- reader$read_next_batch()
+        if (is.null(batch)) break
+        private$batches[[length(private$batches) + 1]] <- batch
+        private$row_count <- private$row_count + batch$num_rows
+        private$byte_count <- private$byte_count + length(batch$serialize())
 
-      odp_validate_insert_data(data, private$schema)
-
-      batch <- arrow::record_batch(data, schema = private$schema)
-
-      private$batches[[length(private$batches) + 1]] <- batch
-      private$row_count <- private$row_count + nrow(data)
-      private$byte_count <- private$byte_count + length(batch$serialize())
-
-      if (private$row_count >= 10000L || private$byte_count >= 10000000L) {
-        private$flush()
+        if (private$row_count >= 10000L || private$byte_count >= 10000000L) {
+          private$flush()
+        }
       }
-
       invisible(self)
     },
     select = function(filter = "", vars = NULL) {

@@ -75,7 +75,7 @@ test_that("transaction rejects non-dataframe input", {
   tx <- OdpTransaction$new(table, "tx-123")
   expect_error(
     tx$insert(list(x = 1)),
-    "data` must be a data frame"
+    "must be a Schema, data frame, RecordBatch, or Arrow Table"
   )
 })
 
@@ -107,7 +107,7 @@ test_that("transaction prevents inserting into committed transaction", {
 
 test_that("transaction buffers data and validates schema", {
   testthat::skip_if_not_installed("arrow")
-  schema <- arrow::schema(x = arrow::int64())
+  schema <- arrow::schema(x = arrow::int32())
   client <- FakeTxClient$new()
   table <- FakeTableTx$new(client, schema)
 
@@ -119,7 +119,7 @@ test_that("transaction buffers data and validates schema", {
 
 test_that("transaction allows multiple inserts before commit", {
   testthat::skip_if_not_installed("arrow")
-  schema <- arrow::schema(x = arrow::int64(), y = arrow::string())
+  schema <- arrow::schema(x = arrow::int32(), y = arrow::string())
   client <- FakeTxClient$new()
   table <- FakeTableTx$new(client, schema)
 
