@@ -80,9 +80,9 @@ test_that("create with Schema creates empty table", {
   schema <- arrow::schema(x = arrow::int32(), y = arrow::string())
   client <- FakeClient$new()
   table <- OdpTable$new(client, "demo.table")
-  
+
   result <- table$create(schema)
-  
+
   expect_true(inherits(result, "OdpTable"))
   expect_length(client$request_log, 1)
   expect_equal(client$request_log[[1]]$path, "/api/table/v2/sdk/create")
@@ -93,9 +93,9 @@ test_that("create with empty dataframe creates empty table", {
   client <- FakeClient$new()
   table <- OdpTable$new(client, "demo.table")
   df <- data.frame(x = integer(), y = character())
-  
+
   result <- table$create(df)
-  
+
   expect_true(inherits(result, "OdpTable"))
   expect_length(client$request_log, 1)
   expect_equal(client$request_log[[1]]$path, "/api/table/v2/sdk/create")
