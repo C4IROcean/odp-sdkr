@@ -294,7 +294,8 @@ OdpTable <- R6::R6Class(
       }
 
       buf <- arrow::BufferOutputStream$create()
-      arrow::write_ipc_stream(arrow::Table$create(schema = schema_to_send), buf)
+      writer <- arrow::RecordBatchStreamWriter$create(buf, schema = schema_to_send)
+      writer$close()
       all_bytes <- buf$finish()$data()
 
       self$client$request_arrow(
