@@ -293,10 +293,8 @@ OdpTable <- R6::R6Class(
         cli::cli_abort("Unable to infer schema")
       }
 
-      buf <- arrow::BufferOutputStream$create()
-      writer <- arrow::RecordBatchStreamWriter$create(buf, schema = schema_to_send)
-      writer$close()
-      all_bytes <- buf$finish()$data()
+      # ipc stream with schema and one empty batch
+      all_bytes <- private$schema_to_ipc_bytes(schema_to_send)
 
       self$client$request_arrow(
         path = "/api/table/v2/sdk/create",
@@ -356,6 +354,21 @@ OdpTable <- R6::R6Class(
     }
   ),
   private = list(
+    schema_to_ipc_bytes = function(schema) {
+      arrays <- setNames(
+        lapply(seq_len(schema$num_fields), function(i) {
+          arrow::Array$create(logical(0))$cast(schema$field(i - 1)$type)
+        }),
+        schema$names
+      )
+
+      buf <- arrow::BufferOutputStream$create()
+      writer <- arrow::RecordBatchStreamWriter$create(buf, schema = schema)
+      batch <- do.call(arrow::RecordBatch$create, c(arrays, list(schema = schema)))
+      writer$write(batch)
+      writer$close()
+      buf$finish()$data()
+    },
     split_arrow_trailer = function(raw_stream, scan_window = 262144) {
       if (!length(raw_stream)) {
         return(list(arrow = raw_stream, trailer = NULL))
