@@ -14,8 +14,9 @@ for multi-step workflows.
 
 \describe{
 \item{$insert(data)$}{Validate and buffer a data frame. Auto-flushes on size thresholds.}
-\item{$replace(filter, vars)$}{Remove rows matching the filter and return them in a cursor.}
-\item{$delete(query)$}{Delete rows matching the query. Returns row count.}
+\item{$select(filter = "", vars = NULL)$}{Query rows in this transaction via a cursor.}
+\item{$replace(filter = "", vars = NULL)$}{Replace rows matching the filter and return them in a cursor.}
+\item{$delete(query = "")$}{Delete rows matching the query. Returns row count.}
 \item{$commit()$}{Finalize and apply all buffered changes.}
 \item{$rollback()$}{Discard all buffered changes without applying.}
 }

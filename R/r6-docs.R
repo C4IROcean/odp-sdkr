@@ -76,6 +76,8 @@ NULL
 #'   Return an [OdpCursor] that lazily streams batches.}
 #'   \item{$aggregate(group_by, filter, aggr, vars, timeout)$}{Compute grouped
 #'   statistics without downloading the entire table.}
+#'   \item{$create(arg)$}{Create table with schema from a Schema, data frame, RecordBatch, or Arrow Table.}
+#'   \item{$begin()$}{Start a transaction and return an [OdpTransaction] handle.}
 #'   \item{$insert(data)$}{Insert a data frame and auto-commit the transaction.}
 #'   \item{$schema()` / `$stats()`}{Inspect schema details and summary
 #'   statistics.}
@@ -133,8 +135,9 @@ NULL
 #' @section Methods:
 #' \describe{
 #'   \item{$insert(data)$}{Validate and buffer a data frame. Auto-flushes on size thresholds.}
-#'   \item{$replace(filter, vars)$}{Remove rows matching the filter and return them in a cursor.}
-#'   \item{$delete(query)$}{Delete rows matching the query. Returns row count.}
+#'   \item{$select(filter = "", vars = NULL)$}{Query rows in this transaction via a cursor.}
+#'   \item{$replace(filter = "", vars = NULL)$}{Replace rows matching the filter and return them in a cursor.}
+#'   \item{$delete(query = "")$}{Delete rows matching the query. Returns row count.}
 #'   \item{$commit()$}{Finalize and apply all buffered changes.}
 #'   \item{$rollback()$}{Discard all buffered changes without applying.}
 #' }

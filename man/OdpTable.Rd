@@ -23,6 +23,8 @@ table. Also accessible as \code{dataset$files}.}
 Return an \link{OdpCursor} that lazily streams batches.}
 \item{$aggregate(group_by, filter, aggr, vars, timeout)$}{Compute grouped
 statistics without downloading the entire table.}
+\item{$create(arg)$}{Create table with schema from a Schema, data frame, RecordBatch, or Arrow Table.}
+\item{$begin()$}{Start a transaction and return an \link{OdpTransaction} handle.}
 \item{$insert(data)$}{Insert a data frame and auto-commit the transaction.}
 \item{$schema()\code{/}$stats()`}{Inspect schema details and summary
 statistics.}

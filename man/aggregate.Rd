@@ -23,6 +23,8 @@ Aggregate rows using backend support
 \item \href{#method-OdpTable-select_request}{\code{OdpTable$select_request()}}
 \item \href{#method-OdpTable-schema}{\code{OdpTable$schema()}}
 \item \href{#method-OdpTable-stats}{\code{OdpTable$stats()}}
+\item \href{#method-OdpTable-create}{\code{OdpTable$create()}}
+\item \href{#method-OdpTable-begin}{\code{OdpTable$begin()}}
 \item \href{#method-OdpTable-insert}{\code{OdpTable$insert()}}
 \item \href{#method-OdpTable-clone}{\code{OdpTable$clone()}}
 }
@@ -115,6 +117,24 @@ A base \code{data.frame} with a \code{group} column and aggregated values.
 
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-OdpTable-create"></a>}}
+\if{latex}{\out{\hypertarget{method-OdpTable-create}{}}}
+\subsection{Method \code{create()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{OdpTable$create(arg = NULL)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-OdpTable-begin"></a>}}
+\if{latex}{\out{\hypertarget{method-OdpTable-begin}{}}}
+\subsection{Method \code{begin()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{OdpTable$begin()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-OdpTable-insert"></a>}}
 \if{latex}{\out{\hypertarget{method-OdpTable-insert}{}}}
 \subsection{Method \code{insert()}}{
@@ -125,7 +145,7 @@ A base \code{data.frame} with a \code{group} column and aggregated values.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{data}}{A data frame to insert.}
+\item{\code{data}}{A data frame, Arrow Table, RecordBatch, or Schema to insert.}
 }
 \if{html}{\out{</div>}}
 }
