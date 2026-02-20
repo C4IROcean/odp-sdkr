@@ -282,6 +282,8 @@ OdpTable <- R6::R6Class(
       )
       odp_table_stats(payload)
     },
+    #' Create table from schema or data
+    #' @param arg A Schema, data frame, Arrow Table, or RecordBatch.
     create = function(arg = NULL) {
       if (is.null(arg)) {
         cli::cli_abort("`arg` must be provided (Schema, data frame, RecordBatch, or Arrow Table)")
@@ -351,6 +353,54 @@ OdpTable <- R6::R6Class(
           stop(e)
         }
       )
+    },
+    #' Remove all data while preserving schema
+    truncate = function() {
+      self$client$request_json(
+        path = "/api/table/v2/truncate",
+        query = list(table_id = self$id),
+        method = "POST",
+        retry = TRUE
+      )
+      invisible(self)
+    },
+    #' Drop the table entirely
+    drop = function() {
+      tryCatch(
+        {
+          self$client$request_json(
+            path = "/api/table/v2/drop",
+            query = list(table_id = self$id),
+            method = "POST",
+            retry = TRUE
+          )
+          invisible(self)
+        },
+        error = function(e) {
+          if (grepl("404|not.found|does.not.exist", e$message, ignore.case = TRUE)) {
+            invisible(self)
+          } else {
+            stop(e)
+          }
+        }
+      )
+    },
+    #' Alter table schema and re-ingest data
+    #' @param schema An Arrow Schema with the new structure.
+    #' @param from_names NOTE: Not implemented. R arrow does not support metadata in batch.
+    alter = function(schema, from_names = list()) {
+      if (!inherits(schema, "ArrowSchema")) {
+        cli::cli_abort("`schema` must be an Arrow Schema")
+      }
+      # ipc stream with schema and one empty batch
+      all_bytes <- private$schema_to_ipc_bytes(schema)
+      self$client$request_json(
+        path = "/api/table/v2/sdk/alter",
+        query = list(table_id = self$id),
+        body = all_bytes,
+        retry = FALSE
+      )
+      invisible(self)
     }
   ),
   private = list(

@@ -100,3 +100,36 @@ test_that("create with empty dataframe creates empty table", {
   expect_length(client$request_log, 1)
   expect_equal(client$request_log[[1]]$path, "/api/table/v2/sdk/create")
 })
+
+test_that("truncate calls correct endpoint with table_id", {
+  client <- FakeClient$new(json_payload = list())
+  table <- OdpTable$new(client, "demo.table")
+
+  table$truncate()
+
+  expect_equal(client$request_log[[1]]$path, "/api/table/v2/truncate")
+  expect_equal(client$request_log[[1]]$query$table_id, "demo.table")
+})
+
+test_that("drop calls correct endpoint with table_id", {
+  client <- FakeClient$new(json_payload = list())
+  table <- OdpTable$new(client, "demo.table")
+
+  table$drop()
+
+  expect_equal(client$request_log[[1]]$path, "/api/table/v2/drop")
+  expect_equal(client$request_log[[1]]$query$table_id, "demo.table")
+})
+
+test_that("alter sends schema bytes in request body", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(x = arrow::int32(), y = arrow::string())
+  client <- FakeClient$new(json_payload = list())
+  table <- OdpTable$new(client, "demo.table")
+
+  table$alter(schema)
+
+  expect_equal(client$request_log[[1]]$path, "/api/table/v2/sdk/alter")
+  expect_equal(client$request_log[[1]]$query$table_id, "demo.table")
+  expect_gt(client$request_log[[1]]$body_length, 0)
+})
