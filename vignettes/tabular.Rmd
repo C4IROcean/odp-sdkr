@@ -164,8 +164,37 @@ start a transaction explicitly:
 ```{r txn, eval = FALSE}
 tx <- table$begin()
 tx$insert(df)
-tx$delete(query = "depth < 50")
+tx$replace(query = "depth < 50", data = new_df)
+tx$delete(query = "depth > 50")
 tx$commit()
+```
+
+## Managing schema
+
+Create a new table from a schema or directly from data:
+
+```{r create, eval = FALSE}
+schema <- arrow::schema(
+  latitude = arrow::float64(),
+  longitude = arrow::float64(),
+  depth = arrow::int32()
+)
+table$create(schema)
+# or from data: table$create(df)
+```
+
+Alter the schema and re-ingest data:
+
+```{r alter, eval = FALSE}
+new_schema <- arrow::schema(latitude = arrow::float64(), longitude = arrow::float64(), depth = arrow::float64())
+table$alter(new_schema)
+```
+
+Remove all rows while preserving schema, or drop the table entirely:
+
+```{r cleanup, eval = FALSE}
+table$truncate()  # remove rows
+table$drop()      # remove table
 ```
 
 The SDK buffers rows and auto-flushes at 10,000 rows or 10 MB.

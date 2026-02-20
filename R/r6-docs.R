@@ -77,6 +77,9 @@ NULL
 #'   \item{$aggregate(group_by, filter, aggr, vars, timeout)$}{Compute grouped
 #'   statistics without downloading the entire table.}
 #'   \item{$create(arg)$}{Create table with schema from a Schema, data frame, RecordBatch, or Arrow Table.}
+#'   \item{$alter(schema, from_names = list())$}{Alter table schema and re-ingest data.}
+#'   \item{$truncate()$}{Remove all data while preserving schema.}
+#'   \item{$drop()$}{Drop the table entirely.}
 #'   \item{$begin()$}{Start a transaction and return an [OdpTransaction] handle.}
 #'   \item{$insert(data)$}{Insert a data frame and auto-commit the transaction.}
 #'   \item{$schema()` / `$stats()`}{Inspect schema details and summary

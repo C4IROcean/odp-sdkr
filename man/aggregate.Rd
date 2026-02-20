@@ -8,10 +8,12 @@ Aggregate rows using backend support
 
 Aggregate rows using backend support
 }
-\keyword{Insert}
+\keyword{Create}
 \keyword{data}
+\keyword{from}
 \keyword{internal}
-\keyword{into}
+\keyword{or}
+\keyword{schema}
 \keyword{table}
 \section{Methods}{
 \subsection{Public methods}{
@@ -26,6 +28,9 @@ Aggregate rows using backend support
 \item \href{#method-OdpTable-create}{\code{OdpTable$create()}}
 \item \href{#method-OdpTable-begin}{\code{OdpTable$begin()}}
 \item \href{#method-OdpTable-insert}{\code{OdpTable$insert()}}
+\item \href{#method-OdpTable-truncate}{\code{OdpTable$truncate()}}
+\item \href{#method-OdpTable-drop}{\code{OdpTable$drop()}}
+\item \href{#method-OdpTable-alter}{\code{OdpTable$alter()}}
 \item \href{#method-OdpTable-clone}{\code{OdpTable$clone()}}
 }
 }
@@ -124,6 +129,14 @@ A base \code{data.frame} with a \code{group} column and aggregated values.
 \if{html}{\out{<div class="r">}}\preformatted{OdpTable$create(arg = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{arg}}{A Schema, data frame, Arrow Table, or RecordBatch.
+Insert data into table}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-OdpTable-begin"></a>}}
@@ -151,6 +164,45 @@ A base \code{data.frame} with a \code{group} column and aggregated values.
 }
 \subsection{Returns}{
 Invisibly returns the transaction object after commit.
+Remove all data while preserving schema
+Drop the table entirely
+Alter table schema and re-ingest data
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-OdpTable-truncate"></a>}}
+\if{latex}{\out{\hypertarget{method-OdpTable-truncate}{}}}
+\subsection{Method \code{truncate()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{OdpTable$truncate()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-OdpTable-drop"></a>}}
+\if{latex}{\out{\hypertarget{method-OdpTable-drop}{}}}
+\subsection{Method \code{drop()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{OdpTable$drop()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-OdpTable-alter"></a>}}
+\if{latex}{\out{\hypertarget{method-OdpTable-alter}{}}}
+\subsection{Method \code{alter()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{OdpTable$alter(schema, from_names = list())}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{schema}}{An Arrow Schema with the new structure.}
+
+\item{\code{from_names}}{NOTE: Not implemented. R arrow does not support metadata in batch.}
+}
+\if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
