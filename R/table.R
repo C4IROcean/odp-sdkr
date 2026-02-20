@@ -389,7 +389,7 @@ OdpTable <- R6::R6Class(
     #' @param schema An Arrow Schema with the new structure.
     #' @param from_names NOTE: Not implemented. R arrow does not support metadata in batch.
     alter = function(schema, from_names = list()) {
-      if (!inherits(schema, "ArrowSchema")) {
+      if (!inherits(schema, "Schema")) {
         cli::cli_abort("`schema` must be an Arrow Schema")
       }
       # ipc stream with schema and one empty batch

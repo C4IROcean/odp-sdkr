@@ -22,7 +22,10 @@ FakeClient <- R6::R6Class(
       )
       self$arrow_payload
     },
-    request_json = function(...) {
+    request_json = function(path = NULL, query = NULL, body = NULL, ...) {
+      self$request_log[[length(self$request_log) + 1]] <- list(
+        path = path, query = query, body_length = length(body)
+      )
       self$json_payload
     }
   )
