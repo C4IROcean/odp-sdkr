@@ -10,14 +10,22 @@ FakeClient <- R6::R6Class(
   public = list(
     arrow_payload = NULL,
     json_payload = NULL,
+    request_log = NULL,
     initialize = function(arrow_payload = raw(0), json_payload = NULL) {
       self$arrow_payload <- arrow_payload
       self$json_payload <- json_payload
+      self$request_log <- list()
     },
-    request_arrow = function(...) {
+    request_arrow = function(path, query = NULL, body = NULL, ...) {
+      self$request_log[[length(self$request_log) + 1]] <- list(
+        path = path, query = query, body_length = length(body)
+      )
       self$arrow_payload
     },
-    request_json = function(...) {
+    request_json = function(path = NULL, query = NULL, body = NULL, ...) {
+      self$request_log[[length(self$request_log) + 1]] <- list(
+        path = path, query = query, body_length = length(body)
+      )
       self$json_payload
     }
   )
@@ -68,4 +76,63 @@ test_that("stats parses JSON payload into typed helper", {
   expect_length(stats$columns, 1)
   expect_s3_class(stats$columns[[1]], "odp_column_stats")
   expect_equal(stats$columns[[1]]$name, "value")
+})
+
+test_that("create with Schema creates empty table", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(x = arrow::int32(), y = arrow::string())
+  client <- FakeClient$new()
+  table <- OdpTable$new(client, "demo.table")
+
+  result <- table$create(schema)
+
+  expect_true(inherits(result, "OdpTable"))
+  expect_length(client$request_log, 1)
+  expect_equal(client$request_log[[1]]$path, "/api/table/v2/sdk/create")
+})
+
+test_that("create with empty dataframe creates empty table", {
+  testthat::skip_if_not_installed("arrow")
+  client <- FakeClient$new()
+  table <- OdpTable$new(client, "demo.table")
+  df <- data.frame(x = integer(), y = character())
+
+  result <- table$create(df)
+
+  expect_true(inherits(result, "OdpTable"))
+  expect_length(client$request_log, 1)
+  expect_equal(client$request_log[[1]]$path, "/api/table/v2/sdk/create")
+})
+
+test_that("truncate calls correct endpoint with table_id", {
+  client <- FakeClient$new(json_payload = list())
+  table <- OdpTable$new(client, "demo.table")
+
+  table$truncate()
+
+  expect_equal(client$request_log[[1]]$path, "/api/table/v2/truncate")
+  expect_equal(client$request_log[[1]]$query$table_id, "demo.table")
+})
+
+test_that("drop calls correct endpoint with table_id", {
+  client <- FakeClient$new(json_payload = list())
+  table <- OdpTable$new(client, "demo.table")
+
+  table$drop()
+
+  expect_equal(client$request_log[[1]]$path, "/api/table/v2/drop")
+  expect_equal(client$request_log[[1]]$query$table_id, "demo.table")
+})
+
+test_that("alter sends schema bytes in request body", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(x = arrow::int32(), y = arrow::string())
+  client <- FakeClient$new(json_payload = list())
+  table <- OdpTable$new(client, "demo.table")
+
+  table$alter(schema)
+
+  expect_equal(client$request_log[[1]]$path, "/api/table/v2/sdk/alter")
+  expect_equal(client$request_log[[1]]$query$table_id, "demo.table")
+  expect_gt(client$request_log[[1]]$body_length, 0)
 })

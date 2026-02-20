@@ -218,11 +218,11 @@ OdpTable <- R6::R6Class(
       tibble::as_tibble(self$aggregate(...))
     },
     #' @keywords internal
-    #' @noRd
     select_request = function(request, cursor = "", retry = TRUE) {
       if (missing(request) || !is.list(request)) {
         cli::cli_abort("`request` must be a list")
       }
+      operation <- request$operation %||% "select"
       body <- list(
         query = request$filter %||% "",
         cols = odp_as_character_vector(request$columns, allow_null = TRUE),
@@ -231,9 +231,13 @@ OdpTable <- R6::R6Class(
         cursor = as.character(cursor %||% "")
       )
       body <- body[!vapply(body, is.null, logical(1))]
+      query_params <- list(table_id = self$id)
+      if (!is.null(request$tx_id)) {
+        query_params$tx_id <- request$tx_id
+      }
       raw_stream <- self$client$request_arrow(
-        path = "/api/table/v2/sdk/select",
-        query = list(table_id = self$id),
+        path = sprintf("/api/table/v2/sdk/%s", operation),
+        query = query_params,
         body = body,
         retry = retry
       )
@@ -277,9 +281,144 @@ OdpTable <- R6::R6Class(
         retry = TRUE
       )
       odp_table_stats(payload)
+    },
+    #' Create table from schema or data
+    #' @param arg A Schema, data frame, Arrow Table, or RecordBatch.
+    create = function(arg = NULL) {
+      if (is.null(arg)) {
+        cli::cli_abort("`arg` must be provided (Schema, data frame, RecordBatch, or Arrow Table)")
+      }
+
+      tbl <- odp_to_arrow_table(arg)
+      schema_to_send <- tbl$schema
+      if (is.null(schema_to_send)) {
+        cli::cli_abort("Unable to infer schema")
+      }
+
+      # ipc stream with schema and one empty batch
+      all_bytes <- private$schema_to_ipc_bytes(schema_to_send)
+
+      self$client$request_arrow(
+        path = "/api/table/v2/sdk/create",
+        query = list(table_id = self$id),
+        body = all_bytes,
+        retry = FALSE
+      )
+
+      if (nrow(tbl) > 0L) {
+        self$insert(tbl)
+      }
+
+      invisible(self)
+    },
+    begin = function() {
+      tx_response <- self$client$request_json(
+        path = "/api/table/v2/begin",
+        query = list(table_id = self$id),
+        method = "POST",
+        retry = FALSE
+      )
+      tx_id <- tx_response$tx_id
+
+      tryCatch(
+        OdpTransaction$new(self, tx_id),
+        error = function(e) {
+          tryCatch(
+            self$client$request_json(
+              path = "/api/table/v2/rollback",
+              query = list(table_id = self$id, tx_id = tx_id),
+              method = "POST",
+              retry = FALSE
+            ),
+            error = function(...) NULL
+          )
+          stop(e)
+        }
+      )
+    },
+    #' Insert data into table
+    #' @param data A data frame, Arrow Table, RecordBatch, or Schema to insert.
+    #' @return Invisibly returns the transaction object after commit.
+    insert = function(data) {
+      data <- odp_to_arrow_table(data)
+      tx <- self$begin()
+      tryCatch(
+        {
+          tx$insert(data)
+          tx$commit()
+          tx
+        },
+        error = function(e) {
+          tryCatch(tx$rollback(), error = function(...) NULL)
+          stop(e)
+        }
+      )
+    },
+    #' Remove all data while preserving schema
+    truncate = function() {
+      self$client$request_json(
+        path = "/api/table/v2/truncate",
+        query = list(table_id = self$id),
+        method = "POST",
+        retry = TRUE
+      )
+      invisible(self)
+    },
+    #' Drop the table entirely
+    drop = function() {
+      tryCatch(
+        {
+          self$client$request_json(
+            path = "/api/table/v2/drop",
+            query = list(table_id = self$id),
+            method = "POST",
+            retry = TRUE
+          )
+          invisible(self)
+        },
+        error = function(e) {
+          if (grepl("404|not.found|does.not.exist", e$message, ignore.case = TRUE)) {
+            invisible(self)
+          } else {
+            stop(e)
+          }
+        }
+      )
+    },
+    #' Alter table schema and re-ingest data
+    #' @param schema An Arrow Schema with the new structure.
+    #' @param from_names NOTE: Not implemented. R arrow does not support metadata in batch.
+    alter = function(schema, from_names = list()) {
+      if (!inherits(schema, "Schema")) {
+        cli::cli_abort("`schema` must be an Arrow Schema")
+      }
+      # ipc stream with schema and one empty batch
+      all_bytes <- private$schema_to_ipc_bytes(schema)
+      self$client$request_json(
+        path = "/api/table/v2/sdk/alter",
+        query = list(table_id = self$id),
+        body = all_bytes,
+        retry = FALSE
+      )
+      invisible(self)
     }
   ),
   private = list(
+    schema_to_ipc_bytes = function(schema) {
+      arrays <- setNames(
+        lapply(seq_len(schema$num_fields), function(i) {
+          arrow::Array$create(logical(0))$cast(schema$field(i - 1)$type)
+        }),
+        schema$names
+      )
+
+      buf <- arrow::BufferOutputStream$create()
+      writer <- arrow::RecordBatchStreamWriter$create(buf, schema = schema)
+      batch <- do.call(arrow::RecordBatch$create, c(arrays, list(schema = schema)))
+      writer$write(batch)
+      writer$close()
+      buf$finish()$data()
+    },
     split_arrow_trailer = function(raw_stream, scan_window = 262144) {
       if (!length(raw_stream)) {
         return(list(arrow = raw_stream, trailer = NULL))

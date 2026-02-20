@@ -16,11 +16,8 @@ knitr::opts_chunk$set(
 
 Most ODP workflows revolve around tabular resources exposed through the HubOcean
 API. This vignette focuses on those helpers: inspecting schemas, streaming data
-in batches, projecting and filtering columns, and letting the backend aggregate
-rows for you.
-
-> Scope: writing/mutating tables is still out-of-scope for the SDK. The helpers
-> here are read-only and revolve around authenticated scans of Arrow batches.
+in batches, projecting and filtering columns, letting the backend aggregate
+rows for you, and modifying data (inserting, replacing, or deleting rows).
 
 ## Installation
 
@@ -144,6 +141,63 @@ print(agg)
 `"count"`, or `"mean"`). Expressions such as `h3(geometry, 6)` or
 `bucket(depth, 0, 200, 400)` are accepted in `group_by` to build grid-based
 reports.
+
+## Writing data
+
+Use `table$insert()` to add data to a table. Data is validated against the
+table schema (required fields, types, nullability) and automatically committed:
+
+```{r insert, eval = FALSE}
+df <- data.frame(
+  latitude = c(10.5, 20.3, 30.1),
+  longitude = c(-50.2, -40.8, -30.5),
+  depth = c(100L, 200L, 150L),
+  stringsAsFactors = FALSE
+)
+
+table$insert(df)
+```
+
+For multi-step workflows (insert, replace, delete in a single transaction),
+start a transaction explicitly:
+
+```{r txn, eval = FALSE}
+tx <- table$begin()
+tx$insert(df)
+tx$replace(query = "depth < 50", data = new_df)
+tx$delete(query = "depth > 50")
+tx$commit()
+```
+
+## Managing schema
+
+Create a new table from a schema or directly from data:
+
+```{r create, eval = FALSE}
+schema <- arrow::schema(
+  latitude = arrow::float64(),
+  longitude = arrow::float64(),
+  depth = arrow::int32()
+)
+table$create(schema)
+# or from data: table$create(df)
+```
+
+Alter the schema and re-ingest data:
+
+```{r alter, eval = FALSE}
+new_schema <- arrow::schema(latitude = arrow::float64(), longitude = arrow::float64(), depth = arrow::float64())
+table$alter(new_schema)
+```
+
+Remove all rows while preserving schema, or drop the table entirely:
+
+```{r cleanup, eval = FALSE}
+table$truncate() # remove rows
+table$drop() # remove table
+```
+
+The SDK buffers rows and auto-flushes at 10,000 rows or 10 MB.
 
 ## Troubleshooting
 

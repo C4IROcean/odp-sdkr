@@ -161,3 +161,17 @@ require_dependency <- function(dep, scope) {
     cli::cli_abort("Install the `{dep}` package to use: {scope}")
   }
 }
+
+odp_to_arrow_table <- function(arg) {
+  if (inherits(arg, "Schema")) {
+    arrow::Table$create(schema = arg)
+  } else if (inherits(arg, "RecordBatch")) {
+    arrow::Table$create(arg)
+  } else if (inherits(arg, "Table")) {
+    arg
+  } else if (is.data.frame(arg)) {
+    arrow::Table$create(arg)
+  } else {
+    cli::cli_abort("`arg` must be a Schema, data frame, RecordBatch, or Arrow Table")
+  }
+}
