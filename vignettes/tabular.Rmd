@@ -193,8 +193,8 @@ table$alter(new_schema)
 Remove all rows while preserving schema, or drop the table entirely:
 
 ```{r cleanup, eval = FALSE}
-table$truncate()  # remove rows
-table$drop()      # remove table
+table$truncate() # remove rows
+table$drop() # remove table
 ```
 
 The SDK buffers rows and auto-flushes at 10,000 rows or 10 MB.
