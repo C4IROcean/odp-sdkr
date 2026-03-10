@@ -32,31 +32,30 @@ print(table$stats())
 print(table$schema())
 
 # Select by column 'type'
-df_coral <- table$select(filter = "type == 'coral'")$dataframe()
-df_seagrass <- table$select(filter = "type == 'seagrass'")$dataframe()
-df_rock <- table$select(filter = "type == 'rock'")$dataframe()
+df_reef <- table$select(filter = "type == 'Reef structure'")$dataframe()
+df_sponge <- table$select(filter = "type == 'Sponge occurrence'")$dataframe()
+df_rodolith <- table$select(filter = "type == 'Rhodolith bed'")$dataframe()
 
 
 ################################################################################
 ###  2. Write data                                                           ###
 ################################################################################
 
-my_ds <- client$dataset("your-dataset-uuid-here")
+my_ds <- client$dataset("927eb49d-eb87-43ac-a5d1-9891f9e8b56e")
 my_table <- my_ds$table
 
 # Create and insert coral data frame into the new table
-my_table$create(df_coral)
+my_table$create(df_reef)
 print(my_table$stats())
 print(my_table$schema())
 
 # Insert more data (append)
-my_table$insert(df_seagrass)
+my_table$insert(df_sponge)
 
 # for multi-step workflows, open a transaction
 tx <- my_table$begin()
-my_table$delete(query = "type == 'coral'")
-tx$replace(query = "type == 'seagrass'", data = df_coral)
-tx$insert(df_rock)
+tx$delete(query = "type == 'Reef structure'")
+tx$insert(df_rodolith)
 tx$commit()
 
 
