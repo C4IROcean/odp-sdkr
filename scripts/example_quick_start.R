@@ -41,7 +41,7 @@ df_rodolith <- table$select(filter = "type == 'Rhodolith bed'")$dataframe()
 ###  2. Write data                                                           ###
 ################################################################################
 
-my_ds <- client$dataset("927eb49d-eb87-43ac-a5d1-9891f9e8b56e")
+my_ds <- client$dataset("your-dataset-uuid-here")
 my_table <- my_ds$table
 
 # Create and insert coral data frame into the new table
