@@ -66,7 +66,7 @@ test_that("transaction initializes with valid schema", {
   expect_true(!is.null(tx$.__enclos_env__$private$schema))
 })
 
-test_that("transaction rejects non-dataframe input", {
+test_that("transaction rejects unnamed list input", {
   testthat::skip_if_not_installed("arrow")
   schema <- arrow::schema(x = arrow::int64())
   client <- FakeTxClient$new()
@@ -74,9 +74,20 @@ test_that("transaction rejects non-dataframe input", {
 
   tx <- OdpTransaction$new(table, "tx-123")
   expect_error(
-    tx$insert(list(x = 1)),
+    tx$insert(list(1, 2, 3)),
     "must be a Schema, data frame, RecordBatch, or Arrow Table"
   )
+})
+
+test_that("transaction accepts named list input", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(x = arrow::int64())
+  client <- FakeTxClient$new()
+  table <- FakeTableTx$new(client, schema)
+
+  tx <- OdpTransaction$new(table, "tx-123")
+  result <- tx$insert(list(x = 1L))
+  expect_true(inherits(result, "OdpTransaction"))
 })
 
 test_that("transaction skips empty dataframes", {
@@ -215,4 +226,56 @@ test_that("transaction delete returns row count", {
   count <- tx$delete(query = "x == 0")
   expect_true(is.integer(count))
   expect_equal(count, 0L)
+})
+
+test_that("transaction replace allows row-by-row iteration and modification", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(id = arrow::int64(), value = arrow::float64())
+  client <- FakeTxClient$new()
+  
+  mock_batch <- arrow::RecordBatch$create(
+    id = c(1L, 2L),
+    value = c(5.0, 10.0),
+    schema = schema
+  )
+  
+  table <- R6::R6Class(
+    "MockTable",
+    public = list(
+      id = "test.table",
+      client = NULL,
+      schema_obj = NULL,
+      initialize = function(client, schema_obj) {
+        self$client <- client
+        self$schema_obj <- schema_obj
+      },
+      schema = function() {
+        self$schema_obj
+      },
+      select_request = function(request, cursor = "", retry = TRUE) {
+        if (request$operation == "replace") {
+          buf <- arrow::BufferOutputStream$create()
+          writer <- arrow::RecordBatchStreamWriter$create(buf, schema = mock_batch$schema)
+          writer$write(mock_batch)
+          writer$close()
+          return(list(arrow = buf$finish()$data(), cursor = NULL, trailer = NULL))
+        }
+        list(arrow = raw(0), cursor = NULL, trailer = NULL)
+      }
+    )
+  )$new(client, schema)
+  
+  tx <- OdpTransaction$new(table, "tx-123")
+  cursor <- tx$replace(filter = "id == 1")
+  
+  rows <- cursor$rows()
+  expect_true(is.list(rows))
+  expect_equal(length(rows), 2)
+  
+  for (row in rows) {
+    row$value <- row$value * 2
+    tx$insert(row)
+  }
+  
+  expect_true(TRUE)
 })

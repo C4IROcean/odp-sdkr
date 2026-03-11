@@ -171,6 +171,9 @@ odp_to_arrow_table <- function(arg) {
     arg
   } else if (is.data.frame(arg)) {
     arrow::Table$create(arg)
+  } else if (is.list(arg) && !is.null(names(arg))) {
+    df <- as.data.frame(arg, stringsAsFactors = FALSE)
+    arrow::Table$create(df)
   } else {
     cli::cli_abort("`arg` must be a Schema, data frame, RecordBatch, or Arrow Table")
   }

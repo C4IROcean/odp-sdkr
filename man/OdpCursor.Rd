@@ -13,8 +13,7 @@ utilities, and materialises results into familiar data structures.
 \describe{
 \item{$next_batch()$}{Return the next \code{RecordBatch} or \code{NULL} when finished.}
 \item{$collect()\code{/}$arrow()\verb{\}\{Materialise unread batches as an Arrow Table.\} \\item\{$dataframe()}}{Materialise unread batches as a base \code{data.frame}.}
-\item{$tibble()`}{Materialise unread batches as a tibble (optional
-dependency).}
+\item{$tibble()\verb{\}\{Materialise unread batches as a tibble (optional dependency).\} \\item\{$rows()}}{Materialise unread batches as a list of named lists (row dictionaries).}
 }
 }
 
