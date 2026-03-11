@@ -232,13 +232,13 @@ test_that("transaction replace allows row-by-row iteration and modification", {
   testthat::skip_if_not_installed("arrow")
   schema <- arrow::schema(id = arrow::int64(), value = arrow::float64())
   client <- FakeTxClient$new()
-  
+
   mock_batch <- arrow::RecordBatch$create(
     id = c(1L, 2L),
     value = c(5.0, 10.0),
     schema = schema
   )
-  
+
   table <- R6::R6Class(
     "MockTable",
     public = list(
@@ -264,18 +264,18 @@ test_that("transaction replace allows row-by-row iteration and modification", {
       }
     )
   )$new(client, schema)
-  
+
   tx <- OdpTransaction$new(table, "tx-123")
   cursor <- tx$replace(filter = "id == 1")
-  
+
   rows <- cursor$rows()
   expect_true(is.list(rows))
   expect_equal(length(rows), 2)
-  
+
   for (row in rows) {
     row$value <- row$value * 2
     tx$insert(row)
   }
-  
+
   expect_true(TRUE)
 })

@@ -53,14 +53,14 @@ print(my_table$schema())
 my_table$insert(df_sponge)
 
 # for multi-step workflows, open a transaction
-tx <- my_table$begin()  # open
+tx <- my_table$begin() # open
 tx$delete(query = "type == 'Reef structure'")
-for (row in tx$replace(filter="area_km2 > 50")$rows()) {
-  row$area_km2 <- row$area_km2 + 5  # add 5 to each area_km2 > 50
+for (row in tx$replace(filter = "area_km2 > 50")$rows()) {
+  row$area_km2 <- row$area_km2 + 5 # add 5 to each area_km2 > 50
   tx$insert(row)
 }
 tx$insert(df_rodolith)
-tx$commit()   # close
+tx$commit() # close
 
 
 ################################################################################

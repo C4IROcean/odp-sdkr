@@ -93,4 +93,3 @@ test_that("cursor rows() returns empty list for empty cursor", {
   expect_true(is.list(rows))
   expect_equal(length(rows), 0)
 })
-
