@@ -180,8 +180,8 @@ odp_to_arrow_table <- function(arg, schema = NULL) {
         col <- tbl$column(i - 1L)
         fld <- tryCatch(schema[[tbl$schema$field(i - 1L)$name]], error = function(...) NULL)
         if (!is.null(fld) &&
-          col$type$Equals(arrow::int32()) &&
-          fld$type$Equals(arrow::int64())) {
+              col$type$Equals(arrow::int32()) &&
+              fld$type$Equals(arrow::int64())) {
           col$cast(arrow::int64())
         } else {
           col
