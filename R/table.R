@@ -340,7 +340,7 @@ OdpTable <- R6::R6Class(
     #' @param data A data frame, Arrow Table, RecordBatch, or Schema to insert.
     #' @return Invisibly returns the transaction object after commit.
     insert = function(data) {
-      data <- odp_to_arrow_table(data)
+      data <- odp_to_arrow_table(data, schema = self$schema())
       tx <- self$begin()
       tryCatch(
         {
