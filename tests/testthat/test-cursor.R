@@ -70,26 +70,3 @@ test_that("cursor converts into arrow tables, data frames, and tibbles", {
   expect_equal(nrow(tib), 2)
 })
 
-test_that("cursor rows() returns list of row dictionaries", {
-  testthat::skip_if_not_installed("arrow")
-  pages <- list(list(raw = cursor_page_raw(data.frame(id = 1:3, name = c("A", "B", "C"))), cursor = NULL))
-  names(pages) <- cursor_key("")
-  cursor <- OdpCursor$new(table = fake_cursor_table(pages), request = fake_cursor_request())
-  rows <- cursor$rows()
-  expect_true(is.list(rows))
-  expect_equal(length(rows), 3)
-  expect_equal(rows[[1]]$id, 1)
-  expect_equal(rows[[1]]$name, "A")
-  expect_equal(rows[[2]]$id, 2)
-  expect_equal(rows[[3]]$name, "C")
-})
-
-test_that("cursor rows() returns empty list for empty cursor", {
-  testthat::skip_if_not_installed("arrow")
-  pages <- list(list(raw = cursor_page_raw(data.frame(id = integer())), cursor = NULL))
-  names(pages) <- cursor_key("")
-  cursor <- OdpCursor$new(table = fake_cursor_table(pages), request = fake_cursor_request())
-  rows <- cursor$rows()
-  expect_true(is.list(rows))
-  expect_equal(length(rows), 0)
-})

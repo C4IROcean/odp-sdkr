@@ -111,7 +111,6 @@ NULL
 #'   \item{$dataframe()`}{Materialise unread batches as a base `data.frame`.}
 #'   \item{$tibble()`}{Materialise unread batches as a tibble (optional
 #'   dependency).}
-#'   \item{$rows()`}{Materialise unread batches as a list of named lists (row dictionaries).}
 #' }
 #'
 #' @examples
@@ -138,7 +137,7 @@ NULL
 #'
 #' @section Methods:
 #' \describe{
-#'   \item{$insert(data)$}{Validate and buffer a data frame, named list (single row), or Arrow Table. Auto-flushes on size thresholds.}
+#'   \item{$insert(data)$}{Validate and buffer a data frame, RecordBatch, or Arrow Table. Auto-flushes on size thresholds.}
 #'   \item{$select(filter = "", vars = NULL)$}{Query rows in this transaction via a cursor.}
 #'   \item{$replace(filter = "", vars = NULL)$}{Replace rows matching the filter and return them in a cursor.}
 #'   \item{$delete(query = "")$}{Delete rows matching the query. Returns row count.}
@@ -155,10 +154,9 @@ NULL
 #'
 #' # Replace example: modify rows matching a filter
 #' tx <- tbl$begin()
-#' for (row in tx$replace(filter = "id == 1")$rows()) {
-#'   row$value <- 10.0
-#'   tx$insert(row)
-#' }
+#' df <- tx$replace(filter = "id == 1")$dataframe()
+#' df$value <- 10.0
+#' tx$insert(df)
 #' tx$commit()
 #' }
 #'

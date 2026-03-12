@@ -21,6 +21,7 @@ Suggests:
     knitr,
     pkgload,
     rmarkdown,
+    sf,
     testthat (>= 3.1.0),
     tibble,
     withr

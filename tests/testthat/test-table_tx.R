@@ -66,7 +66,7 @@ test_that("transaction initializes with valid schema", {
   expect_true(!is.null(tx$.__enclos_env__$private$schema))
 })
 
-test_that("transaction rejects unnamed list input", {
+test_that("transaction rejects non-dataframe input", {
   testthat::skip_if_not_installed("arrow")
   schema <- arrow::schema(x = arrow::int64())
   client <- FakeTxClient$new()
@@ -74,20 +74,9 @@ test_that("transaction rejects unnamed list input", {
 
   tx <- OdpTransaction$new(table, "tx-123")
   expect_error(
-    tx$insert(list(1, 2, 3)),
+    tx$insert(list(x = 1)),
     "must be a Schema, data frame, RecordBatch, or Arrow Table"
   )
-})
-
-test_that("transaction accepts named list input", {
-  testthat::skip_if_not_installed("arrow")
-  schema <- arrow::schema(x = arrow::int64())
-  client <- FakeTxClient$new()
-  table <- FakeTableTx$new(client, schema)
-
-  tx <- OdpTransaction$new(table, "tx-123")
-  result <- tx$insert(list(x = 1L))
-  expect_true(inherits(result, "OdpTransaction"))
 })
 
 test_that("transaction skips empty dataframes", {
@@ -266,16 +255,25 @@ test_that("transaction replace allows row-by-row iteration and modification", {
   )$new(client, schema)
 
   tx <- OdpTransaction$new(table, "tx-123")
-  cursor <- tx$replace(filter = "id == 1")
+  df <- tx$replace(filter = "id == 1")$dataframe()
 
-  rows <- cursor$rows()
-  expect_true(is.list(rows))
-  expect_equal(length(rows), 2)
+  expect_s3_class(df, "data.frame")
+  expect_equal(nrow(df), 2)
+  expect_equal(df$id, c(1, 2))
+  expect_equal(df$value, c(5.0, 10.0))
 
-  for (row in rows) {
-    row$value <- row$value * 2
-    tx$insert(row)
-  }
+  df$value <- df$value * 2
+  tx$insert(df)
 
-  expect_true(TRUE)
+  buffered <- do.call(
+    rbind,
+    lapply(tx$.__enclos_env__$private$batches, function(b) {
+      as.data.frame(b, stringsAsFactors = FALSE)
+    })
+  )
+  expect_equal(nrow(buffered), 2)
+  expect_equal(buffered$id, c(1, 2))
+  expect_equal(buffered$value, c(10.0, 20.0))
+
+  tx$commit()
 })

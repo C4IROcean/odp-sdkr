@@ -59,18 +59,6 @@ OdpCursor <- R6::R6Class(
       require_dependency("tibble", "cursor tibble conversion")
       df <- self$dataframe()
       tibble::as_tibble(df)
-    },
-    rows = function() {
-      tbl <- self$collect()
-      if (is.null(tbl) || tbl$num_rows == 0) {
-        return(list())
-      }
-      rows_list <- vector("list", tbl$num_rows)
-      df <- as.data.frame(tbl, stringsAsFactors = FALSE)
-      for (i in seq_len(nrow(df))) {
-        rows_list[[i]] <- as.list(df[i, , drop = FALSE])
-      }
-      rows_list
     }
   ),
   private = list(
