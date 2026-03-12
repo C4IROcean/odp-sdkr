@@ -69,4 +69,3 @@ test_that("cursor converts into arrow tables, data frames, and tibbles", {
   expect_s3_class(tib, "tbl_df")
   expect_equal(nrow(tib), 2)
 })
-
