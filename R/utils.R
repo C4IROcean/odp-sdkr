@@ -178,14 +178,14 @@ odp_to_arrow_table <- function(arg, schema = NULL) {
     if (!is.null(schema) && !tbl$schema$Equals(schema)) {
       new_arrays <- lapply(seq_len(tbl$num_columns), function(i) {
         col <- tbl$column(i - 1L)
-        fld <- tryCatch(schema[[tbl$schema$field(i - 1L)$name]], error = function(...) NULL)
-        if (!is.null(fld) &&
+        fld <- tryCatch(
+          schema[[tbl$schema$field(i - 1L)$name]],
+          error = function(...) NULL
+        )
+        upcast <- !is.null(fld) &&
           col$type$Equals(arrow::int32()) &&
-          fld$type$Equals(arrow::int64())) {
-          col$cast(arrow::int64())
-        } else {
-          col
-        }
+          fld$type$Equals(arrow::int64())
+        if (upcast) col$cast(arrow::int64()) else col
       })
       tbl <- do.call(arrow::Table$create, setNames(new_arrays, tbl$schema$names))
     }
