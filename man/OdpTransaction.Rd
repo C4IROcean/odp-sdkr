@@ -13,7 +13,7 @@ for multi-step workflows.
 \section{Methods}{
 
 \describe{
-\item{$insert(data)$}{Validate and buffer a data frame, RecordBatch, or Arrow Table. Auto-flushes on size thresholds.}
+\item{$insert(data)$}{Insert a data frame, RecordBatch, or Arrow Table. Auto-flushes on size thresholds.}
 \item{$select(filter = "", vars = NULL)$}{Query rows in this transaction via a cursor.}
 \item{$replace(filter = "", vars = NULL)$}{Replace rows matching the filter and return them in a cursor.}
 \item{$delete(query = "")$}{Delete rows matching the query. Returns row count.}
