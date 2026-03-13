@@ -216,3 +216,64 @@ test_that("transaction delete returns row count", {
   expect_true(is.integer(count))
   expect_equal(count, 0L)
 })
+
+test_that("transaction replace allows row-by-row iteration and modification", {
+  testthat::skip_if_not_installed("arrow")
+  schema <- arrow::schema(id = arrow::int64(), value = arrow::float64())
+  client <- FakeTxClient$new()
+
+  mock_batch <- arrow::RecordBatch$create(
+    id = c(1L, 2L),
+    value = c(5.0, 10.0),
+    schema = schema
+  )
+
+  table <- R6::R6Class(
+    "MockTable",
+    public = list(
+      id = "test.table",
+      client = NULL,
+      schema_obj = NULL,
+      initialize = function(client, schema_obj) {
+        self$client <- client
+        self$schema_obj <- schema_obj
+      },
+      schema = function() {
+        self$schema_obj
+      },
+      select_request = function(request, cursor = "", retry = TRUE) {
+        if (request$operation == "replace") {
+          buf <- arrow::BufferOutputStream$create()
+          writer <- arrow::RecordBatchStreamWriter$create(buf, schema = mock_batch$schema)
+          writer$write(mock_batch)
+          writer$close()
+          return(list(arrow = buf$finish()$data(), cursor = NULL, trailer = NULL))
+        }
+        list(arrow = raw(0), cursor = NULL, trailer = NULL)
+      }
+    )
+  )$new(client, schema)
+
+  tx <- OdpTransaction$new(table, "tx-123")
+  df <- tx$replace(filter = "id == 1")$dataframe()
+
+  expect_s3_class(df, "data.frame")
+  expect_equal(nrow(df), 2)
+  expect_equal(df$id, c(1, 2))
+  expect_equal(df$value, c(5.0, 10.0))
+
+  df$value <- df$value * 2
+  tx$insert(df)
+
+  buffered <- do.call(
+    rbind,
+    lapply(tx$.__enclos_env__$private$batches, function(b) {
+      as.data.frame(b, stringsAsFactors = FALSE)
+    })
+  )
+  expect_equal(nrow(buffered), 2)
+  expect_equal(buffered$id, c(1, 2))
+  expect_equal(buffered$value, c(10.0, 20.0))
+
+  tx$commit()
+})

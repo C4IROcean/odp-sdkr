@@ -18,7 +18,7 @@ OdpTransaction <- R6::R6Class(
       if (isTRUE(private$committed)) {
         cli::cli_abort("Cannot insert into a committed transaction")
       }
-      data <- odp_to_arrow_table(data)
+      data <- odp_to_arrow_table(data, schema = private$schema)
       if (data$num_rows == 0L) {
         return(invisible(self))
       }

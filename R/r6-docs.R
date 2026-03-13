@@ -137,7 +137,7 @@ NULL
 #'
 #' @section Methods:
 #' \describe{
-#'   \item{$insert(data)$}{Validate and buffer a data frame. Auto-flushes on size thresholds.}
+#'   \item{$insert(data)$}{Insert a data frame, RecordBatch, or Arrow Table. Auto-flushes on size thresholds.}
 #'   \item{$select(filter = "", vars = NULL)$}{Query rows in this transaction via a cursor.}
 #'   \item{$replace(filter = "", vars = NULL)$}{Replace rows matching the filter and return them in a cursor.}
 #'   \item{$delete(query = "")$}{Delete rows matching the query. Returns row count.}
@@ -151,6 +151,13 @@ NULL
 #' tbl <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")$table
 #' df <- data.frame(latitude = c(10, 20), longitude = c(30, 40))
 #' tbl$insert(df)
+#'
+#' # Replace example: modify rows matching a filter
+#' tx <- tbl$begin()
+#' df <- tx$replace(filter = "id == 1")$dataframe()
+#' df$value <- 10.0
+#' tx$insert(df)
+#' tx$commit()
 #' }
 #'
 #' @seealso [OdpTable]

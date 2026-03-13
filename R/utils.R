@@ -162,16 +162,61 @@ require_dependency <- function(dep, scope) {
   }
 }
 
-odp_to_arrow_table <- function(arg) {
+odp_to_arrow_table <- function(arg, schema = NULL) {
   if (inherits(arg, "Schema")) {
-    arrow::Table$create(schema = arg)
-  } else if (inherits(arg, "RecordBatch")) {
-    arrow::Table$create(arg)
-  } else if (inherits(arg, "Table")) {
-    arg
-  } else if (is.data.frame(arg)) {
-    arrow::Table$create(arg)
-  } else {
-    cli::cli_abort("`arg` must be a Schema, data frame, RecordBatch, or Arrow Table")
+    return(arrow::Table$create(schema = arg))
   }
+  if (inherits(arg, "RecordBatch")) {
+    return(arrow::Table$create(arg))
+  }
+  if (inherits(arg, "Table")) {
+    return(arg)
+  }
+  if (is.data.frame(arg)) {
+    arg <- odp_encode_geometry(arg, schema = schema)
+    tbl <- arrow::Table$create(arg)
+    if (!is.null(schema) && !tbl$schema$Equals(schema)) {
+      new_arrays <- lapply(seq_len(tbl$num_columns), function(i) {
+        col <- tbl$column(i - 1L)
+        fld <- tryCatch(
+          schema[[tbl$schema$field(i - 1L)$name]],
+          error = function(...) NULL
+        )
+        upcast <- !is.null(fld) &&
+          col$type$Equals(arrow::int32()) &&
+          fld$type$Equals(arrow::int64())
+        if (upcast) col$cast(arrow::int64()) else col
+      })
+      tbl <- do.call(arrow::Table$create, setNames(new_arrays, tbl$schema$names))
+    }
+    return(tbl)
+  }
+  cli::cli_abort(
+    "`arg` must be a Schema, data frame, RecordBatch, or Arrow Table"
+  )
+}
+
+#' Encode sf geometry columns as WKB or WKT based on schema
+odp_encode_geometry <- function(df, schema = NULL) {
+  for (col in names(df)) {
+    if (!inherits(df[[col]], "sfc")) next
+    use_wkt <- FALSE
+    if (!is.null(schema)) {
+      fld <- schema[[col]]
+      if (!is.null(fld)) {
+        use_wkt <- fld$type$Equals(arrow::utf8()) ||
+          fld$type$Equals(arrow::large_utf8())
+      }
+    }
+    df[[col]] <- if (use_wkt) {
+      vapply(df[[col]], function(g) {
+        if (is.null(g)) NA_character_ else sf::st_as_text(g)
+      }, character(1))
+    } else {
+      lapply(df[[col]], function(g) {
+        if (is.null(g)) NULL else sf::st_as_binary(g)
+      })
+    }
+  }
+  df
 }
