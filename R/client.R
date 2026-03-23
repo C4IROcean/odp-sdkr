@@ -100,7 +100,7 @@ OdpClient <- R6::R6Class(
           resp <- httr2::request("http://localhost:8000/access_token") |>
             httr2::req_method("POST") |>
             httr2::req_perform()
-          token <- httr2::resp_body_json(resp)[["token"]]
+          token <- httr2::resp_body_json(resp, check_type = FALSE)[["token"]]
           paste("Bearer", token)
         })
       }
