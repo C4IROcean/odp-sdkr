@@ -32,6 +32,7 @@ need deeper explanations or diagrams.
 
 - Install the package dependencies declared in `DESCRIPTION` and keep a recent
   version of `devtools`/`pkgload` around for running checks.
+- Build the package locally `Rscript -e 'devtools::build()'`
 - Run the unit tests with `R -q -e "devtools::test()"` and the full
   `devtools::check()` suite locally before opening a pull request. Tests use
   small synthetic Arrow streams, so they never call the live API.

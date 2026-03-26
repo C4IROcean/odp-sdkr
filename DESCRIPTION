@@ -3,8 +3,8 @@ Type: Package
 Title: Ocean Data Platform R SDK
 Version: 0.1.6
 Authors@R: c(
-    person(given = "Pål Erik", family = "Lystad", role = c("aut", "cre")),
-    person(given = "Max", family = "Romagnoli", role = "aut", email = "max.romagnoli@oceandata.earth"),
+    person(given = "Max", family = "Romagnoli", role = c("aut", "cre"), email = "max.romagnoli@oceandata.earth"),
+    person(given = "Pål Erik", family = "Lystad", role = "aut")
   )
 Description: Lightweight R bindings for the Ocean Data Platform services.
     The package provides authenticated access to tabular datasets exposed by
