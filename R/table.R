@@ -23,7 +23,7 @@ OdpTable <- R6::R6Class(
     #' Aggregate rows using backend support
     #' @param group_by Expression defining the grouping key (defaults to "'TOTAL'").
     #' @param filter Optional filter expression.
-    #' @param aggr Named list mapping column -> aggregation type ("sum", "min", "max", "count", "mean").
+    #' @param aggr Named list mapping column -> aggregation type ("sum", "min", "max", "count", "avg"). "mean" is also accepted as an alias for "avg".
     #' @param vars Optional bind variables for the filter.
     #' @param timeout Request timeout in seconds.
     #' @return A base `data.frame` with a `group` column and aggregated values.
@@ -72,6 +72,11 @@ OdpTable <- R6::R6Class(
         retry = TRUE
       )
       payload <- private$split_arrow_trailer(raw_payload)
+      if (!is.null(payload$trailer$cursor) && nzchar(payload$trailer$cursor)) {
+        cli::cli_abort(
+          "Aggregate timed out before completing; increase `timeout` or narrow your filter"
+        )
+      }
 
       read_batches <- function(stream) {
         out <- list()
@@ -224,9 +229,8 @@ OdpTable <- R6::R6Class(
       }
       operation <- request$operation %||% "select"
       body <- list(
-        query = request$filter %||% "",
+        query = odp_inline_vars(request$filter %||% "", request$vars),
         cols = odp_as_character_vector(request$columns, allow_null = TRUE),
-        vars = odp_prepare_bindings(request$vars),
         timeout = request$timeout %||% 30,
         cursor = as.character(cursor %||% "")
       )
@@ -398,6 +402,7 @@ OdpTable <- R6::R6Class(
         path = "/api/table/v2/sdk/alter",
         query = list(table_id = self$id),
         body = all_bytes,
+        method = "POST",
         retry = FALSE
       )
       invisible(self)

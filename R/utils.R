@@ -60,14 +60,26 @@ odp_inline_vars <- function(query, vars) {
     return(query)
   }
   prepared <- odp_prepare_bindings(vars)
-  for (name in names(prepared)) {
-    value <- prepared[[name]]
-    replacement <- if (is.character(value)) {
-      sprintf("'%s'", gsub("'", "''", value))
-    } else {
-      as.character(value)
+  if (is.null(names(prepared))) {
+    # positional form: replace each '?' in order
+    for (value in prepared) {
+      replacement <- if (is.character(value)) {
+        sprintf("'%s'", gsub("'", "''", value))
+      } else {
+        as.character(value)
+      }
+      query <- sub("?", replacement, query, fixed = TRUE)
     }
-    query <- sub(sprintf("$%s", name), replacement, query, fixed = TRUE)
+  } else {
+    for (name in names(prepared)) {
+      value <- prepared[[name]]
+      replacement <- if (is.character(value)) {
+        sprintf("'%s'", gsub("'", "''", value))
+      } else {
+        as.character(value)
+      }
+      query <- sub(sprintf("$%s", name), replacement, query, fixed = TRUE)
+    }
   }
   query
 }
@@ -96,7 +108,8 @@ odp_prepare_bindings <- function(vars) {
     vars <- as.list(vars)
   }
   if (is.list(vars) && is.null(names(vars))) {
-    cli::cli_abort("`vars` must be a named list")
+    # positional (unnamed) list — allowed for ? placeholders
+    return(lapply(vars, odp_cast_binding_value))
   }
   lapply(vars, odp_cast_binding_value)
 }
