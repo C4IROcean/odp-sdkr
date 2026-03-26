@@ -31,7 +31,7 @@ tbl$insert(df)
 
 # Replace example: modify rows matching a filter
 tx <- tbl$begin()
-df <- tx$replace(filter = "id == 1")$dataframe()
+df <- tx$replace(filter = "id == 1")$all_dataframe()
 df$value <- 10.0
 tx$insert(df)
 tx$commit()

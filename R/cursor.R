@@ -33,8 +33,19 @@ OdpCursor <- R6::R6Class(
         return(batch)
       }
     },
-    collect = function() {
-      batches <- private$drain_batches()
+    next_dataframe = function() {
+      batch <- self$next_batch()
+      if (is.null(batch)) return(NULL)
+      as.data.frame(batch, stringsAsFactors = FALSE)
+    },
+    next_tibble = function() {
+      require_dependency("tibble", "cursor tibble conversion")
+      batch <- self$next_batch()
+      if (is.null(batch)) return(NULL)
+      tibble::as_tibble(as.data.frame(batch, stringsAsFactors = FALSE))
+    },
+    all_table = function(max_rows = 1000000, max_time = 60) {
+      batches <- private$drain_batches(max_rows = max_rows, max_time = max_time)
       if (!length(batches)) {
         schema <- private$state$schema
         if (!is.null(schema)) {
@@ -45,20 +56,20 @@ OdpCursor <- R6::R6Class(
       reader <- do.call(arrow::RecordBatchReader$create, batches)
       reader$read_table()
     },
-    arrow = function() {
-      self$collect()
-    },
-    dataframe = function() {
-      tbl <- self$collect()
+    all_dataframe = function(max_rows = 1000000, max_time = 60) {
+      tbl <- self$all_table(max_rows = max_rows, max_time = max_time)
       if (is.null(tbl)) {
         return(data.frame(stringsAsFactors = FALSE))
       }
       as.data.frame(tbl, stringsAsFactors = FALSE)
     },
-    tibble = function() {
+    all_tibble = function(max_rows = 1000000, max_time = 60) {
       require_dependency("tibble", "cursor tibble conversion")
-      df <- self$dataframe()
-      tibble::as_tibble(df)
+      tbl <- self$all_table(max_rows = max_rows, max_time = max_time)
+      if (is.null(tbl)) {
+        return(tibble::tibble())
+      }
+      tibble::as_tibble(as.data.frame(tbl, stringsAsFactors = FALSE))
     }
   ),
   private = list(
@@ -95,12 +106,19 @@ OdpCursor <- R6::R6Class(
         private$state$finished <- TRUE
       }
     },
-    drain_batches = function() {
+    drain_batches = function(max_rows = 1000000, max_time = 60) {
       batches <- list()
+      t0 <- proc.time()[["elapsed"]]
+      rows <- 0L
       repeat {
         batch <- self$next_batch()
-        if (is.null(batch)) {
-          break
+        if (is.null(batch)) break
+        rows <- rows + batch$num_rows
+        if (rows > max_rows) {
+          cli::cli_abort("Too many rows ({rows}); raise `max_rows` if intended")
+        }
+        if (proc.time()[["elapsed"]] - t0 > max_time) {
+          cli::cli_abort("Fetching all rows exceeded {max_time}s; raise `max_time` if intended")
         }
         batches[[length(batches) + 1]] <- batch
       }

@@ -39,7 +39,7 @@ statistics.}
 client <- odp_client(api_key = "Sk_live_your_key")
 tbl <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")$table
 cursor <- tbl$select(columns = c("latitude", "longitude"))
-cursor$dataframe()
+cursor$all_dataframe()
 }
 
 }

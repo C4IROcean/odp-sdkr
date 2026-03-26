@@ -91,7 +91,7 @@ NULL
 #' client <- odp_client(api_key = "Sk_live_your_key")
 #' tbl <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")$table
 #' cursor <- tbl$select(columns = c("latitude", "longitude"))
-#' cursor$dataframe()
+#' cursor$all_dataframe()
 #' }
 #'
 #' @seealso [OdpCursor], [OdpDataset], [OdpTransaction], [OdpRaw]
@@ -106,11 +106,11 @@ NULL
 #' @section Methods:
 #' \describe{
 #'   \item{$next_batch()$}{Return the next `RecordBatch` or `NULL` when finished.}
-#'   \item{$collect()` / `$arrow()`}{Materialise unread batches as an Arrow
-#'   Table.}
-#'   \item{$dataframe()`}{Materialise unread batches as a base `data.frame`.}
-#'   \item{$tibble()`}{Materialise unread batches as a tibble (optional
-#'   dependency).}
+#'   \item{$next_dataframe()$}{Return the next batch as a base `data.frame`, or `NULL`.}
+#'   \item{$next_tibble()$}{Return the next batch as a tibble, or `NULL`.}
+#'   \item{$all_table(max_rows, max_time)$}{Fetch all remaining batches as an Arrow Table.}
+#'   \item{$all_dataframe(max_rows, max_time)$}{Fetch all remaining batches as a base `data.frame`.}
+#'   \item{$all_tibble(max_rows, max_time)$}{Fetch all remaining batches as a tibble.}
 #' }
 #'
 #' @examples
@@ -118,10 +118,19 @@ NULL
 #' client <- odp_client(api_key = "Sk_live_your_key")
 #' tbl <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")$table
 #' cursor <- tbl$select(filter = "depth > 300", columns = c("latitude", "depth"))
+#'
+#' # Fetch the next batch in the format you prefer
+#' batch <- cursor$next_batch()       # as Arrow RecordBatch
+#' df    <- cursor$next_dataframe()   # as base data.frame
+#'
+#' # Or iterate over the whole table
 #' while (!is.null(batch <- cursor$next_batch())) {
 #'   print(batch$num_rows)
 #' }
-#' df <- cursor$dataframe()
+#'
+#' # Or fetch everything at once
+#' df        <- cursor$all_dataframe()
+#' arrow_tbl <- cursor$all_table()
 #' }
 #'
 #' @seealso [OdpTable]
@@ -154,7 +163,7 @@ NULL
 #'
 #' # Replace example: modify rows matching a filter
 #' tx <- tbl$begin()
-#' df <- tx$replace(filter = "id == 1")$dataframe()
+#' df <- tx$replace(filter = "id == 1")$all_dataframe()
 #' df$value <- 10.0
 #' tx$insert(df)
 #' tx$commit()

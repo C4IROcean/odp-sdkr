@@ -46,7 +46,7 @@
 #'   timeout = 15
 #' )
 #'
-#' df <- cursor$dataframe()
+#' df <- cursor$all_dataframe()
 #' ```
 #'
 #' @section Streaming rows in batches:
@@ -55,17 +55,24 @@
 #'
 #' ```r
 #' cursor <- table$select()
+#'
+#' # Fetch the next batch in the format you prefer
+#' batch <- cursor$next_batch()       # as Arrow RecordBatch
+#' df    <- cursor$next_dataframe()   # as base data.frame
+#'
+#' # Or iterate over the whole table
 #' while (!is.null(chunk <- cursor$next_batch())) {
 #'   print(chunk$num_rows)
 #' }
 #'
-#' df <- cursor$dataframe()
-#' arrow_tbl <- cursor$arrow()
+#' # Or fetch everything at once
+#' df        <- cursor$all_dataframe()
+#' arrow_tbl <- cursor$all_table()
 #' ```
 #'
-#' `collect()`/`dataframe()`/`tibble()`/`arrow()` only materialise batches that
-#' have not been streamed yet. To obtain the full dataset after calling
-#' `next_batch()`, create a fresh cursor and collect before iterating.
+#' `all_dataframe()`/`all_table()`/`all_tibble()` accept `max_rows` and
+#' `max_time` safety limits (defaults: 1 000 000 rows, 60 s). Use `next_batch()`
+#' for streaming without limits.
 #'
 #' @section Aggregations:
 #' The SDK supports server-side aggregations so you can compute simple
@@ -75,7 +82,7 @@
 #' agg <- table$aggregate(
 #'   group_by = "'TOTAL'",
 #'   filter = "depth > 200",
-#'   aggr = list(depth = "mean")
+#'   aggr = list(depth = "avg")
 #' )
 #' print(agg)
 #' ```
@@ -93,7 +100,8 @@
 #' ```
 #'
 #' @section Optional dependencies:
-#' `tibble` is optional and only needed if you plan to call `cursor$tibble()`.
+#' `tibble` is optional and only needed if you plan to call `cursor$all_tibble()`
+#' or `cursor$next_tibble()`.
 #' Install optional packages as needed, e.g. `install.packages("tibble")`.
 #'
 #' @section Documentation and help:
