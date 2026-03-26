@@ -1,12 +1,15 @@
 Package: odp
 Type: Package
 Title: Ocean Data Platform R SDK
-Version: 0.1.5
-Authors@R: c(person(given = "Pål Erik", family = "Lystad", role = c("aut", "cre"), email = "pal.lystad@hubocean.earth"))
+Version: 0.1.6
+Authors@R: c(
+    person(given = "Pål Erik", family = "Lystad", role = c("aut", "cre")),
+    person(given = "Max", family = "Romagnoli", role = "aut", email = "max.romagnoli@oceandata.earth"),
+  )
 Description: Lightweight R bindings for the Ocean Data Platform services.
     The package provides authenticated access to tabular datasets exposed by
-    the HubOcean API and includes helpers for inspecting dataset metadata and
-    streaming data batches into common R data structures.
+    the HubOcean API and includes helpers for inspecting dataset metadata, reading and
+    writing data batches with common R data structures.
 License: file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

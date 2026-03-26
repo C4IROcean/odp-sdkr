@@ -7,17 +7,6 @@ and stream rows straight into data frames or Arrow tables without leaving your
 analysis workflow. The SDK supports streaming queries, server-side aggregations,
 and raw file management (upload, download, ingest).
 
-When you work with the SDK you will usually touch the following pieces:
-
-- `odp_client()` — holds your API key and issues authenticated requests
-- dataset object — retrieved via `client$dataset("<dataset-id>")`
-- table object — accessed via `dataset$table`
-- cursor — returned from `table$select()` and responsible for paging data
-- files — accessed via `dataset$files` for raw file upload/download/ingest
-
-The sections below walk through that flow so anyone landing here (including via
-`?odp`) quickly sees how to get from credentials to a usable tibble.
-
 > Status: This sdk is still considered pre-release. We are looking for feedback,
 > so please reach out if you have any issues, concerns or other ideas that you
 > think can improve your experience using this sdk.
@@ -30,141 +19,14 @@ The sections below walk through that flow so anyone landing here (including via
 - Authentication: either an API key or an interactive browser session (see
   [Authentication](#authentication) below)
 
-## Authentication
-
-Get your API key from [My Account in the web app](https://app.hubocean.earth/account) and pass it to the client:
-
-```r
-client <- odp_client(api_key = "your-api-key")
-```
-
-Or set the `ODP_API_KEY` environment variable and skip the argument:
-
-```r
-Sys.setenv(ODP_API_KEY = "your-api-key")
-client <- odp_client()
-```
-
-When no API key is available in an interactive R session, the SDK will automatically open your browser for authentication via HubOcean's login page. The interactive flow uses OAuth2 with Azure B2C and caches tokens locally, so you won't need to re-authenticate on every session.
-
 ## Getting Started
 
-The snippet below shows the full flow: install, authenticate, navigate to a
-dataset, pick a table, and stream the columns you care about. Swap the dataset
-ID for the resources you have access to in the ODP catalog.
-
-```r
-# install straight from GitHub (requires remotes, pak, or devtools)
-install.packages("remotes")  # skip if already installed
-remotes::install_github("C4IROcean/odp-sdkr")
-
-# local checkout? make sure vignettes are built
-# remotes::install_local("~/dev/odp_sdkr", build = TRUE, build_vignettes = TRUE)
-
-library(odp)
-
-# 1. Client (API key can come from ODP_API_KEY)
-client <- odp_client(api_key = "Sk_....")
-
-# 2. Dataset (see https://app.hubocean.earth/)
-dataset <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")
-
-# 3. Table (defaults to the first table in the dataset)
-table <- dataset$table
-
-# 4. Query – returns a cursor that streams rows lazily
-cursor <- table$select(
-  filter = "depth > $min_depth",
-  vars = list(min_depth = 300),
-  columns = c("latitude", "longitude", "depth"),
-  timeout = 15
-)
-
-# 5. Fetch table into a dataframe that you can use for analysis
-df <- cursor$dataframe()
-```
-
-## Documentation
-
-The hosted documentation at https://docs.hubocean.earth/r_sdk/ is the canonical
-place to learn more about authentication, cursors, batching, and advanced
+The hosted documentation at https://docs.hubocean.earth/sdk/unified/ is the canonical
+place to learn more about authentication, cursors, batching, reading/writing, and advanced
 patterns. Install the package locally and lean on the official docs when you
 need deeper explanations or diagrams.
 
 - `help(package = "odp")` gives a quick index of the exported helpers
-
-### Streaming rows in batches
-When working with a large table it can be helpful to fetch the table in batches, to do this you can use the next_batch helper to iterate over the batches one by one. The cursor will fetch the pages in chunks in the background when you need them
-
-```r
-cursor <- table$select()
-while (!is.null(chunk <- cursor$next_batch())) {
-  print(chunk$num_rows)
-}
-
-# Convert on demand
-df <- cursor$dataframe()
-arrow_tbl <- cursor$arrow()
-# tibble support is optional
-# tib_tbl <- cursor$tibble()
-```
-
-> `collect()`/`dataframe()`/`tibble()`/`arrow()` only materialise batches that
-> have not been streamed yet. To obtain the full dataset after calling
-> `next_batch()`, create a fresh cursor and collect before iterating.
-
-### Aggregations
-
-The sdk supports server side aggregations. This can be useful if you want to compute simple statistics without transfering all of the table data
-```r
-agg <- table$aggregate(
-  group_by = "'TOTAL'",
-  filter = "depth > 200",
-  aggr = list(depth = "mean")
-)
-print(agg)
-```
-
-> Pass an `aggr` named list where each entry specifies how the column should be
-> aggregated (`"sum"`, `"min"`, `"max"`, `"count"`, `"mean"`).
-
-### File handling
-
-Datasets can also hold raw files. The `$files` helper (an alias for
-`$table$raw`) lets you upload, list, download, ingest and delete files.
-
-```r
-# Upload a file (accepts a character string or raw vector)
-file_id <- dataset$files$upload("measurements.csv", "lat,lon,depth\n59.5,5.3,120\n")
-
-# List files attached to the dataset
-dataset$files$list()
-
-# Download returns a raw vector
-content <- dataset$files$download(file_id)
-cat(rawToChar(content))
-
-# Ingest the file into the table (modes: "append", "truncate", "drop")
-dataset$files$ingest(file_id)
-
-# Delete the file
-dataset$files$delete(file_id)
-```
-
-### Metadata helpers
-```r
-schema <- table$schema()
-str(schema)
-
-stats <- table$stats()
-str(stats)
-```
-
-### Optional dependencies
-
-- `tibble` (only if you want `cursor$tibble()`)
-
-Install optional packages as needed, for example: `install.packages("tibble")`.
 
 ## Development
 
