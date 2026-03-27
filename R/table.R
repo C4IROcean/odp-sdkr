@@ -23,7 +23,7 @@ OdpTable <- R6::R6Class(
     #' Aggregate rows using backend support
     #' @param group_by Expression defining the grouping key (defaults to "'TOTAL'").
     #' @param filter Optional filter expression.
-    #' @param aggr Named list mapping column -> aggregation type ("sum", "min", "max", "count", "avg"). "mean" is also accepted as an alias for "avg".
+    #' @param aggr Named list mapping column -> aggregation type ("sum", "min", "max", "count", "avg").
     #' @param vars Optional bind variables for the filter.
     #' @param timeout Request timeout in seconds.
     #' @return A base `data.frame` with a `group` column and aggregated values.
