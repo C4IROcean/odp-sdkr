@@ -73,20 +73,26 @@ into familiar R structures.
 
 ```{r select, eval = FALSE}
 cursor <- table$select()
+
+# Fetch the next batch in the format you prefer
+batch <- cursor$next_batch() # as Arrow RecordBatch
+df <- cursor$next_dataframe() # as base data.frame
+
+# Or iterate over the whole table
 while (!is.null(batch <- cursor$next_batch())) {
   cat("chunk rows:", batch$num_rows, "\n")
-  # process each RecordBatch on the fly
 }
 
-df <- cursor$dataframe()
-arrow_tbl <- cursor$arrow()
+# Or fetch everything at once
+df <- cursor$all_dataframe()
+arrow_tbl <- cursor$all_table()
 # optional tidyverse helper
-tib_tbl <- cursor$tibble()
+# tib     <- cursor$all_tibble()
 ```
 
-Materialisation helpers only drain batches that have not been streamed yet. To
-collect the full result after iterating with `next_batch()`, start a new cursor
-and call `dataframe()`/`arrow()`/`tibble()` before consuming chunks.
+`all_dataframe()`/`all_table()`/`all_tibble()` accept `max_rows` and `max_time`
+safety limits (defaults: 1 000 000 rows, 60 s). Use `next_batch()` for streaming
+without limits.
 
 ### Filters
 
@@ -132,7 +138,7 @@ transfer summary rows.
 agg <- table$aggregate(
   group_by = "G2year",
   filter = "G2year >= 2020 AND G2year < 2025",
-  aggr = list(G2salinity = "mean", G2tco2 = "max")
+  aggr = list(G2salinity = "avg", G2tco2 = "max")
 )
 print(agg)
 ```

@@ -255,7 +255,7 @@ test_that("transaction replace allows row-by-row iteration and modification", {
   )$new(client, schema)
 
   tx <- OdpTransaction$new(table, "tx-123")
-  df <- tx$replace(filter = "id == 1")$dataframe()
+  df <- tx$replace(filter = "id == 1")$all_dataframe()
 
   expect_s3_class(df, "data.frame")
   expect_equal(nrow(df), 2)

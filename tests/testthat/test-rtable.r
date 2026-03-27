@@ -91,7 +91,7 @@ fake_schema <- function(fields) {
   )
 }
 
-aggregate_stream <- function(dfs) {
+aggregate_stream <- function(dfs, cursor = NULL) {
   testthat::skip_if_not_installed("arrow")
   if (!length(dfs)) {
     return(raw(0))
@@ -103,7 +103,12 @@ aggregate_stream <- function(dfs) {
     writer$write_table(arrow::Table$create(df))
   }
   writer$close()
-  sink$finish()$data()
+  bytes <- sink$finish()$data()
+  if (!is.null(cursor)) {
+    trailer <- list(cursor = cursor)
+    bytes <- c(bytes, charToRaw(jsonlite::toJSON(trailer, auto_unbox = TRUE)))
+  }
+  bytes
 }
 
 test_that("select returns cursor that can collect to tibble", {
@@ -113,28 +118,30 @@ test_that("select returns cursor that can collect to tibble", {
   table <- OdpTable$new(client, "demo.table")
   cursor <- table$select()
   expect_s3_class(cursor, "OdpCursor")
-  tbl <- cursor$collect()
+  tbl <- cursor$all_table()
   expect_s3_class(tbl, "Table")
   df_result <- as.data.frame(tbl)
   expect_equal(df_result$id, df$id)
   expect_equal(df_result$value, df$value)
 })
 
-test_that("select forwards filters, columns, and vars", {
+test_that("select forwards filters, columns, and inlines vars", {
   testthat::skip_if_not_installed("arrow")
   client <- FakeSelectClient$new(stream = sample_stream(data.frame(id = numeric())))
   vars <- list(name = "abc", day = as.Date("2024-01-01"))
   table <- OdpTable$new(client, "demo.table")
-  cursor <- table$select(filter = "value > 0", columns = c("id", "value"), vars = vars, timeout = 10)
+  cursor <- table$select(
+    filter = "col == $name AND dt == $day",
+    columns = c("id", "value"), vars = vars, timeout = 10
+  )
   expect_s3_class(cursor, "OdpCursor")
   cursor$next_batch() # trigger a request
   expect_equal(client$last_request$path, "/api/table/v2/sdk/select")
   expect_equal(client$last_request$query$table_id, "demo.table")
-  expect_equal(client$last_request$body$query, "value > 0")
+  expect_equal(client$last_request$body$query, "col == 'abc' AND dt == '2024-01-01'")
   expect_equal(client$last_request$body$cols, c("id", "value"))
   expect_equal(client$last_request$body$timeout, 10)
-  expect_equal(client$last_request$body$vars$name, "abc")
-  expect_equal(client$last_request$body$vars$day, "2024-01-01")
+  expect_null(client$last_request$body$vars)
   expect_equal(client$last_request$body$cursor, "")
 })
 
@@ -144,7 +151,7 @@ test_that("select returns empty cursor when stream is empty", {
   client <- FakeSelectClient$new(stream = sample_stream(empty_df))
   table <- OdpTable$new(client, "demo.table")
   cursor <- table$select()
-  empty_tbl <- cursor$collect()
+  empty_tbl <- cursor$all_table()
   expect_s3_class(empty_tbl, "Table")
   expect_equal(empty_tbl$num_rows, 0)
 })
@@ -302,6 +309,25 @@ test_that("aggregate infers aggregations from schema metadata", {
   res <- table$aggregate(group_by = "geo")
   expect_equal(client$last_request$body$aggr$value, "sum")
   expect_equal(res$value, 7)
+})
+
+test_that("aggregate errors when backend returns a non-empty cursor (timeout / partial data)", {
+  testthat::skip_if_not_installed("arrow")
+  df <- data.frame(
+    .group = "TOTAL",
+    value_sum = 5,
+    stringsAsFactors = FALSE
+  )
+  client <- FakeSelectClient$new(
+    stream = sample_stream(data.frame(id = numeric())),
+    aggregate_stream = aggregate_stream(list(df), cursor = "some-cursor-token")
+  )
+  schema_override <- fake_schema(list(list(name = "value", metadata = NULL)))
+  table <- TestOdpTable$new(client, "demo.table", schema_override = schema_override)
+  expect_error(
+    table$aggregate(group_by = "geo", aggr = list(value = "sum")),
+    "timed out"
+  )
 })
 
 test_that("aggregate errors for unsupported aggregation type", {

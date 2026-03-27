@@ -49,23 +49,42 @@ test_that("cursor reads chunks across multiple pages", {
   expect_null(cursor$next_batch())
 })
 
-test_that("cursor converts into arrow tables, data frames, and tibbles", {
+test_that("all_table, all_dataframe, and all_tibble materialise full result", {
   testthat::skip_if_not_installed("arrow")
   testthat::skip_if_not_installed("tibble")
   pages <- list(list(raw = cursor_page_raw(data.frame(id = 1:2)), cursor = NULL))
   names(pages) <- cursor_key("")
   cursor_df <- OdpCursor$new(table = fake_cursor_table(pages), request = fake_cursor_request())
-  df <- cursor_df$dataframe()
+  df <- cursor_df$all_dataframe()
   expect_s3_class(df, "data.frame")
   expect_equal(nrow(df), 2)
 
   cursor_tbl <- OdpCursor$new(table = fake_cursor_table(pages), request = fake_cursor_request())
-  tbl <- cursor_tbl$arrow()
+  tbl <- cursor_tbl$all_table()
   expect_s3_class(tbl, "Table")
   expect_equal(tbl$num_rows, 2)
 
   cursor_tibble <- OdpCursor$new(table = fake_cursor_table(pages), request = fake_cursor_request())
-  tib <- cursor_tibble$tibble()
+  tib <- cursor_tibble$all_tibble()
   expect_s3_class(tib, "tbl_df")
   expect_equal(nrow(tib), 2)
+})
+
+test_that("next_dataframe and next_tibble return single batch", {
+  testthat::skip_if_not_installed("arrow")
+  testthat::skip_if_not_installed("tibble")
+  pages <- list(list(raw = cursor_page_raw(data.frame(id = 1:3)), cursor = NULL))
+  names(pages) <- cursor_key("")
+
+  cursor_df <- OdpCursor$new(table = fake_cursor_table(pages), request = fake_cursor_request())
+  df <- cursor_df$next_dataframe()
+  expect_s3_class(df, "data.frame")
+  expect_equal(nrow(df), 3)
+  expect_null(cursor_df$next_dataframe())
+
+  cursor_tib <- OdpCursor$new(table = fake_cursor_table(pages), request = fake_cursor_request())
+  tib <- cursor_tib$next_tibble()
+  expect_s3_class(tib, "tbl_df")
+  expect_equal(nrow(tib), 3)
+  expect_null(cursor_tib$next_tibble())
 })

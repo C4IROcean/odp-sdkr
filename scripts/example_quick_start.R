@@ -25,16 +25,16 @@ client <- odp_client(api_key = api_key)
 ds <- client$dataset("21b630bb-06b2-48de-a172-97a7a67e30ba") # amazon reef
 table <- ds$table
 
-# Select a batch of data from the table and return as a data frame
+# Attempt to fetch the whole table and return it as a data frame
 # NOTE: if the table is large, you might want to iterate over select instead
-df <- table$select()$dataframe()
+df <- table$select()$all_dataframe()
 print(table$stats())
 print(table$schema())
 
 # Select by column 'type'
-df_reef <- table$select(filter = "type == 'Reef structure'")$dataframe()
-df_sponge <- table$select(filter = "type == 'Sponge occurrence'")$dataframe()
-df_rodolith <- table$select(filter = "type == 'Rhodolith bed'")$dataframe()
+df_reef <- table$select(filter = "type == 'Reef structure'")$all_dataframe()
+df_sponge <- table$select(filter = "type == 'Sponge occurrence'")$all_dataframe()
+df_rodolith <- table$select(filter = "type == 'Rhodolith bed'")$all_dataframe()
 
 
 ################################################################################
@@ -55,7 +55,7 @@ my_table$insert(df_sponge)
 # for multi-step workflows, open a transaction
 tx <- my_table$begin() # open
 tx$delete(query = "type == 'Reef structure'")
-df_replace <- tx$replace(filter = "area_km2 > 50")$dataframe()
+df_replace <- tx$replace(filter = "area_km2 > 50")$all_dataframe()
 df_replace$area_km2 <- df_replace$area_km2 + 5
 tx$insert(df_replace)
 tx$insert(df_rodolith)

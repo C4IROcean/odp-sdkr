@@ -58,7 +58,7 @@ cursor <- table$select(
   timeout = 15
 )
 
-df <- cursor$dataframe()
+df <- cursor$all_dataframe()
 }\if{html}{\out{</div>}}
 }
 
@@ -68,17 +68,24 @@ When working with a large table it can be helpful to consume batches
 incrementally. The cursor pulls pages in the background as needed.
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{cursor <- table$select()
+
+# Fetch the next batch in the format you prefer
+batch <- cursor$next_batch()       # as Arrow RecordBatch
+df    <- cursor$next_dataframe()   # as base data.frame
+
+# Or iterate over the whole table
 while (!is.null(chunk <- cursor$next_batch())) \{
   print(chunk$num_rows)
 \}
 
-df <- cursor$dataframe()
-arrow_tbl <- cursor$arrow()
+# Or fetch everything at once
+df        <- cursor$all_dataframe()
+arrow_tbl <- cursor$all_table()
 }\if{html}{\out{</div>}}
 
-\code{collect()}/\code{dataframe()}/\code{tibble()}/\code{arrow()} only materialise batches that
-have not been streamed yet. To obtain the full dataset after calling
-\code{next_batch()}, create a fresh cursor and collect before iterating.
+\code{all_dataframe()}/\code{all_table()}/\code{all_tibble()} accept \code{max_rows} and
+\code{max_time} safety limits (defaults: 1 000 000 rows, 60 s). Use \code{next_batch()}
+for streaming without limits.
 }
 
 \section{Aggregations}{
@@ -89,7 +96,7 @@ statistics without transferring the full table.
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{agg <- table$aggregate(
   group_by = "'TOTAL'",
   filter = "depth > 200",
-  aggr = list(depth = "mean")
+  aggr = list(depth = "avg")
 )
 print(agg)
 }\if{html}{\out{</div>}}
@@ -110,7 +117,8 @@ str(stats)
 
 \section{Optional dependencies}{
 
-\code{tibble} is optional and only needed if you plan to call \code{cursor$tibble()}.
+\code{tibble} is optional and only needed if you plan to call \code{cursor$all_tibble()}
+or \code{cursor$next_tibble()}.
 Install optional packages as needed, e.g. \code{install.packages("tibble")}.
 }
 
