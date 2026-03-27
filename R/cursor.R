@@ -35,13 +35,17 @@ OdpCursor <- R6::R6Class(
     },
     next_dataframe = function() {
       batch <- self$next_batch()
-      if (is.null(batch)) return(NULL)
+      if (is.null(batch)) {
+        return(NULL)
+      }
       as.data.frame(batch, stringsAsFactors = FALSE)
     },
     next_tibble = function() {
       require_dependency("tibble", "cursor tibble conversion")
       batch <- self$next_batch()
-      if (is.null(batch)) return(NULL)
+      if (is.null(batch)) {
+        return(NULL)
+      }
       tibble::as_tibble(as.data.frame(batch, stringsAsFactors = FALSE))
     },
     all_table = function(max_rows = 1000000, max_time = 60) {
