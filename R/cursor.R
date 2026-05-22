@@ -91,6 +91,9 @@ OdpCursor <- R6::R6Class(
         return()
       }
       cursor <- as.character(private$state$next_cursor %||% "")
+      if (nzchar(cursor)) {
+        message(sprintf("[cursor] fetching next round..."))
+      }
       payload <- private$table$select_request(private$request, cursor)
       private$state$next_cursor <- payload$cursor
       private$state$reader <- NULL

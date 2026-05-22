@@ -27,8 +27,8 @@ tbl <- client$dataset("aea06582-fc49-4995-a9a8-2f31fcc65424")$table
 cursor <- tbl$select(filter = "depth > 300", columns = c("latitude", "depth"))
 
 # Fetch the next batch in the format you prefer
-batch <- cursor$next_batch()       # as Arrow RecordBatch
-df    <- cursor$next_dataframe()   # as base data.frame
+batch <- cursor$next_batch() # as Arrow RecordBatch
+df <- cursor$next_dataframe() # as base data.frame
 
 # Or iterate over the whole table
 while (!is.null(batch <- cursor$next_batch())) {
@@ -36,7 +36,7 @@ while (!is.null(batch <- cursor$next_batch())) {
 }
 
 # Or fetch everything at once
-df        <- cursor$all_dataframe()
+df <- cursor$all_dataframe()
 arrow_tbl <- cursor$all_table()
 }
 
