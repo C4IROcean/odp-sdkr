@@ -31,8 +31,10 @@ FakeSelectClient <- R6::R6Class(
     streams = NULL,
     last_request = NULL,
     json_payload = NULL,
-    aggregate_stream = raw(0),
-    initialize = function(stream = raw(0), json_payload = NULL, streams = NULL, aggregate_stream = raw(0)) {
+    aggregate_streams = NULL,
+    initialize = function(stream = raw(0), json_payload = NULL,
+                          streams = NULL, aggregate_stream = raw(0),
+                          aggregate_streams = NULL) {
       if (!is.null(streams)) {
         keys <- names(streams) %||% character(length(streams))
         norm <- vapply(keys, stream_key, character(1))
@@ -43,12 +45,18 @@ FakeSelectClient <- R6::R6Class(
         names(self$streams) <- stream_key("")
       }
       self$json_payload <- json_payload
-      self$aggregate_stream <- aggregate_stream
+      if (!is.null(aggregate_streams)) {
+        self$aggregate_streams <- aggregate_streams
+      } else {
+        self$aggregate_streams <- list(aggregate_stream)
+        names(self$aggregate_streams) <- stream_key("")
+      }
     },
     request_arrow = function(path, query = NULL, body = NULL, ...) {
       if (grepl("/aggregate$", path)) {
         self$last_request <- list(path = path, query = query, body = body)
-        return(self$aggregate_stream %||% raw(0))
+        cursor <- stream_key(body$cursor %||% "")
+        return(self$aggregate_streams[[cursor]] %||% raw(0))
       }
       cursor <- stream_key(body$cursor %||% "")
       self$last_request <- list(path = path, query = query, body = body)
@@ -311,23 +319,31 @@ test_that("aggregate infers aggregations from schema metadata", {
   expect_equal(res$value, 7)
 })
 
-test_that("aggregate errors when backend returns a non-empty cursor (timeout / partial data)", {
+test_that("aggregate paginates across cursor pages", {
   testthat::skip_if_not_installed("arrow")
-  df <- data.frame(
-    .group = "TOTAL",
-    value_sum = 5,
+  df1 <- data.frame(
+    .group = c("TOTAL", "A"),
+    value_sum = c(10, 4),
     stringsAsFactors = FALSE
   )
+  df2 <- data.frame(
+    .group = c("TOTAL", "A"),
+    value_sum = c(6, 5),
+    stringsAsFactors = FALSE
+  )
+  page1 <- aggregate_stream(list(df1), cursor = "page2")
+  page2 <- aggregate_stream(list(df2))
+  agg_streams <- list(page1, page2)
+  names(agg_streams) <- c(stream_key(""), "page2")
   client <- FakeSelectClient$new(
     stream = sample_stream(data.frame(id = numeric())),
-    aggregate_stream = aggregate_stream(list(df), cursor = "some-cursor-token")
+    aggregate_streams = agg_streams
   )
   schema_override <- fake_schema(list(list(name = "value", metadata = NULL)))
   table <- TestOdpTable$new(client, "demo.table", schema_override = schema_override)
-  expect_error(
-    table$aggregate(group_by = "geo", aggr = list(value = "sum")),
-    "timed out"
-  )
+  result <- table$aggregate(group_by = "geo", aggr = list(value = "sum"))
+  expect_equal(result$group, c("TOTAL", "A"))
+  expect_equal(result$value, c(16, 9))
 })
 
 test_that("aggregate errors for unsupported aggregation type", {

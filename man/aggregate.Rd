@@ -73,7 +73,7 @@ Aggregate rows using backend support
 
 \item{\code{filter}}{Optional filter expression.}
 
-\item{\code{aggr}}{Named list mapping column -> aggregation type ("sum", "min", "max", "count", "avg"). "mean" is also accepted as an alias for "avg".}
+\item{\code{aggr}}{Named list mapping column -> aggregation type ("sum", "min", "max", "count", "avg").}
 
 \item{\code{vars}}{Optional bind variables for the filter.}
 

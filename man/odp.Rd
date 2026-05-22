@@ -132,6 +132,11 @@ vignettes they are accessible via \code{vignette("odp")} and
 }
 
 \author{
-\strong{Maintainer}: Pål Erik Lystad \email{pal.lystad@hubocean.earth}
+\strong{Maintainer}: Max Romagnoli \email{max.romagnoli@oceandata.earth}
+
+Authors:
+\itemize{
+  \item Pål Erik Lystad
+}
 
 }

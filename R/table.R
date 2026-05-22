@@ -65,18 +65,6 @@ OdpTable <- R6::R6Class(
         cursor = "",
         timeout = timeout
       )
-      raw_payload <- self$client$request_arrow(
-        path = "/api/table/v2/sdk/aggregate",
-        query = list(table_id = self$id),
-        body = body,
-        retry = TRUE
-      )
-      payload <- private$split_arrow_trailer(raw_payload)
-      if (!is.null(payload$trailer$cursor) && nzchar(payload$trailer$cursor)) {
-        cli::cli_abort(
-          "Aggregate timed out before completing; increase `timeout` or narrow your filter"
-        )
-      }
 
       read_batches <- function(stream) {
         out <- list()
@@ -183,39 +171,66 @@ OdpTable <- R6::R6Class(
         rownames(df) <- NULL
         df
       }
-      batches <- read_batches(payload$arrow)
-      if (!length(batches)) {
-        empty <- data.frame(group = character(), stringsAsFactors = FALSE)
-        return(empty)
-      }
-      combined <- do.call(rbind, c(batches, list(stringsAsFactors = FALSE)))
-      key_col <- names(combined)[1]
-      if (!nzchar(key_col) || identical(key_col, "")) {
-        key_col <- ".group"
-        names(combined)[1] <- key_col
-      }
-      group_levels <- unique(combined[[key_col]])
-      group_indices <- lapply(group_levels, function(level_value) which(combined[[key_col]] == level_value))
       plan <- build_plan(aggr)
-      partials_df <- data.frame(setNames(list(group_levels), key_col), stringsAsFactors = FALSE, check.names = FALSE)
-      for (col in names(plan)) {
-        if (!col %in% names(combined)) {
-          if (identical(col, "*")) {
-            next
+      total <- NULL
+      key_col <- NULL
+      page_num <- 0L
+
+      reduce_total <- function(df) {
+        group_levels <- unique(df[[key_col]])
+        group_indices <- lapply(group_levels, function(lv) which(df[[key_col]] == lv))
+        out <- data.frame(setNames(list(group_levels), key_col), stringsAsFactors = FALSE, check.names = FALSE)
+        for (col in names(plan)) {
+          if (!col %in% names(df)) {
+            if (identical(col, "*")) next
+            cli::cli_abort(sprintf("Backend aggregation payload missing column '%s'", col))
           }
-          cli::cli_abort(sprintf("Backend aggregation payload missing column '%s'", col))
+          fun_name <- plan[[col]]
+          column_data <- df[[col]]
+          template <- column_data[0]
+          values <- rep(template, length.out = length(group_levels))
+          for (idx in seq_along(group_levels)) {
+            values[idx] <- apply_fun(column_data[group_indices[[idx]] %||% integer(0)], fun_name)
+          }
+          out[[col]] <- values
         }
-        fun_name <- plan[[col]]
-        column_data <- combined[[col]]
-        template <- column_data[0]
-        values <- rep(template, length.out = length(group_levels))
-        for (idx in seq_along(group_levels)) {
-          rows <- group_indices[[idx]] %||% integer(0)
-          values[idx] <- apply_fun(column_data[rows], fun_name)
-        }
-        partials_df[[col]] <- values
+        out
       }
-      finalise_aggregations(partials_df, aggr, key_col)
+
+      repeat {
+        page_num <- page_num + 1L
+        raw_payload <- self$client$request_arrow(
+          path = "/api/table/v2/sdk/aggregate",
+          query = list(table_id = self$id),
+          body = body,
+          retry = TRUE
+        )
+        payload <- private$split_arrow_trailer(raw_payload)
+        page_batches <- read_batches(payload$arrow)
+        if (length(page_batches)) {
+          page_df <- do.call(rbind, c(page_batches, list(stringsAsFactors = FALSE)))
+          if (is.null(total)) {
+            key_col <- names(page_df)[1]
+            if (!nzchar(key_col) || identical(key_col, "")) key_col <- ".group"
+            names(page_df)[1] <- key_col
+          } else {
+            names(page_df)[1] <- key_col
+            page_df <- rbind(total, page_df)
+          }
+          total <- reduce_total(page_df)
+        }
+        cursor_next <- payload$trailer$cursor
+        if (is.null(cursor_next) || !nzchar(cursor_next)) break
+        message(sprintf(
+          "[aggregate] round %d done (%d groups so far), fetching next round...",
+          page_num, if (!is.null(total)) nrow(total) else 0L
+        ))
+        body$cursor <- cursor_next
+      }
+      if (is.null(total)) {
+        return(data.frame(group = character(), stringsAsFactors = FALSE))
+      }
+      finalise_aggregations(total, aggr, key_col)
     },
     #' @rdname aggregate
     aggregate_tibble = function(...) {
