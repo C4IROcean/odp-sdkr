@@ -245,7 +245,7 @@ OdpTable <- R6::R6Class(
       operation <- request$operation %||% "select"
       body <- list(
         query = odp_inline_vars(request$filter %||% "", request$vars),
-        cols = odp_as_character_vector(request$columns, allow_null = TRUE),
+        cols = odp_as_json_array(odp_as_character_vector(request$columns, allow_null = TRUE)),
         timeout = request$timeout %||% 30,
         cursor = as.character(cursor %||% "")
       )
