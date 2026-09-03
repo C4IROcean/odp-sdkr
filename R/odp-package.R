@@ -107,7 +107,7 @@
 #' @section Documentation and help:
 #' Run `help(package = "odp")` or `??odp` for walkthroughs covering
 #' installation, authentication, streaming helpers, and aggregations. Hosted docs
-#' live at <https://docs.hubocean.earth/r_sdk/>. If you install the accompanying
+#' live at <https://docs.hubocean.earth/reference/sdk/>. If you install the accompanying
 #' vignettes they are accessible via `vignette("odp")` and
 #' `vignette("odp-tabular")`.
 #'

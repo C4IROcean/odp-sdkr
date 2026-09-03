@@ -21,7 +21,7 @@ and raw file management (upload, download, ingest).
 
 ## Getting Started
 
-The hosted documentation at https://docs.hubocean.earth/sdk/unified/ is the canonical
+The hosted documentation at https://docs.hubocean.earth/reference/sdk/ is the canonical
 place to learn more about authentication, cursors, batching, reading/writing, and advanced
 patterns. Install the package locally and lean on the official docs when you
 need deeper explanations or diagrams.
