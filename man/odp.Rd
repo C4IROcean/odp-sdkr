@@ -126,7 +126,7 @@ Install optional packages as needed, e.g. \code{install.packages("tibble")}.
 
 Run \code{help(package = "odp")} or \code{??odp} for walkthroughs covering
 installation, authentication, streaming helpers, and aggregations. Hosted docs
-live at \url{https://docs.hubocean.earth/r_sdk/}. If you install the accompanying
+live at \url{https://docs.hubocean.earth/reference/sdk/}. If you install the accompanying
 vignettes they are accessible via \code{vignette("odp")} and
 \code{vignette("odp-tabular")}.
 }
