@@ -16,7 +16,7 @@ and raw file management (upload, download, ingest).
 - R 4.1 or newer
 - Packages declared in `DESCRIPTION` (install with `pak`, `renv`, or
   `install.packages()`)
-- Authentication: either an API key or an interactive browser session (see
+- Authentication: an API key (see
   [Authentication](#authentication) below)
 
 ## Getting Started

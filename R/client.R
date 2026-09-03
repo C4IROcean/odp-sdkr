@@ -3,9 +3,9 @@ OdpClient <- R6::R6Class(
   "OdpClient",
   public = list(
     base_url = NULL,
-    initialize = function(api_key = NULL, base_url = NULL, interactive = NULL) {
+    initialize = function(api_key = NULL, base_url = NULL) {
       self$base_url <- odp_default_base_url(base_url)
-      private$auth_header <- private$resolve_auth(api_key = api_key, interactive = interactive)
+      private$auth_header <- private$resolve_auth(api_key = api_key)
     },
     dataset = function(dataset_id) {
       dataset_id <- odp_validate_id(as.character(dataset_id))
@@ -82,7 +82,7 @@ OdpClient <- R6::R6Class(
       # to get the status:  status <- httr2::resp_status(resp)
       resp
     },
-    resolve_auth = function(api_key = NULL, interactive = NULL) {
+    resolve_auth = function(api_key = NULL) {
       # 1. Check explicit api_key argument
       if (!is.null(api_key) && nzchar(api_key)) {
         return(function() paste("ApiKey", api_key))
@@ -94,37 +94,11 @@ OdpClient <- R6::R6Class(
         return(function() paste("ApiKey", env_key))
       }
 
-      # 3. Check JUPYTERHUB_API_TOKEN environment variable (JupyterHub environment)
-      if (nzchar(Sys.getenv("JUPYTERHUB_API_TOKEN", unset = ""))) {
-        return(function() {
-          resp <- httr2::request("http://localhost:8000/access_token") |>
-            httr2::req_method("POST") |>
-            httr2::req_perform()
-          token <- httr2::resp_body_json(resp, check_type = FALSE)[["token"]]
-          paste("Bearer", token)
-        })
-      }
-
-      # 4. Try interactive authentication if allowed
-      # interactive = NULL means "auto" (use if in interactive session)
-      # interactive = TRUE means "force interactive"
-      # interactive = FALSE means "disable interactive"
-      use_interactive <- if (is.null(interactive)) {
-        odp_can_use_interactive()
-      } else {
-        isTRUE(interactive)
-      }
-
-      if (use_interactive) {
-        return(odp_interactive_auth())
-      }
-
-      # 4. No authentication method available
+      # 3. No authentication method available
       cli::cli_abort(
         c(
           "! Unable to authenticate with HubOcean.",
-          "x Provide an API key via `api_key` or the ODP_API_KEY environment variable.",
-          "i Or run in an interactive session to use browser-based login."
+          "x Provide an API key via `api_key` or the ODP_API_KEY environment variable."
         )
       )
     },

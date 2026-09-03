@@ -14,7 +14,7 @@ library(odp)
 # Initialize the odp client
 api_key <- "sk_your_api_key_here"
 client <- odp_client(api_key = api_key)
-# Or simply default to interactive browser login or ODP_API_KEY env var:
+# Or fall back to the ODP_API_KEY env var:
 # client <- odp_client()
 
 
