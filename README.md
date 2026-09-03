@@ -16,8 +16,8 @@ and raw file management (upload, download, ingest).
 - R 4.1 or newer
 - Packages declared in `DESCRIPTION` (install with `pak`, `renv`, or
   `install.packages()`)
-- Authentication: either an API key or an interactive browser session (see
-  [Authentication](#authentication) below)
+- Authentication: an API key, passed to `odp_client(api_key = ...)` or set via
+  the `ODP_API_KEY` environment variable
 
 ## Getting Started
 

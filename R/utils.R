@@ -47,6 +47,14 @@ odp_as_character_vector <- function(x, allow_null = TRUE) {
   as.character(x)
 }
 
+# Mark a vector so jsonlite keeps it as an array even when it has length 1
+odp_as_json_array <- function(x) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  I(x)
+}
+
 #' Inline bind variables into a query string.
 #'
 #' Replaces \code{$name} placeholders in \code{query} with the
